@@ -84,11 +84,14 @@ and the leaderboard all recompute automatically.
 
 ### Knockout match
 
-The **Knockout tab draws a connected bracket** — all 16 Round-of-32 ties feeding
-round by round into the final, with connector lines showing the route. Until a
-tie's teams are known, the slot shows where they come from (e.g. `A2`, `B2`,
-`3rd A/B/C/D/F`, or `Winner R32-1`). Ties involving the signed-in player's teams
-are highlighted.
+The **Knockout tab draws a connected bracket top-to-bottom** — the 16
+Round-of-32 ties across the top flowing down round by round to the final, with
+connector lines showing the route. Slots fill in **automatically from the latest
+results**: once a group finishes, its winner/runner-up drop into the matching
+R32 slots, and each tie's winner propagates down to the next round (projected
+teams show in italics until ESPN confirms them officially). Until a slot's team
+is known it shows where it comes from (e.g. `A2`, `B2`, `3rd A/B/C/D/F`,
+`Winner R32-1`). Ties involving the signed-in player's teams are highlighted.
 
 Knockout fixtures have stable ids by bracket position (`R32-1` … `R32-16`,
 `R16-1` … `R16-8`, `QF-1` … `QF-4`, `SF-1`, `SF-2`, `3P-1`, `F-1`) plus the

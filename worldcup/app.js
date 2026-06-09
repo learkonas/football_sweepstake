@@ -197,82 +197,96 @@
   }
 
   const ROUND_TITLE = { R32: "Round of 32", R16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", "3P": "Third place", F: "Final" };
+  const ROUND_SHORT = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", F: "Final" };
 
   function renderBracket() {
     const byId = {};
     D.knockoutFixtures.forEach((f) => { byId[f.id] = f; });
-    const cols = ["R32", "R16", "QF", "SF", "F"];
-    const colIndex = { R32: 0, R16: 1, QF: 2, SF: 3, F: 4 };
+    const rows = ["R32", "R16", "QF", "SF", "F"];
+    const depth = { R32: 0, R16: 1, QF: 2, SF: 3, F: 4 };
 
-    const TIE_W = 160, TIE_H = 46, UNIT = 62, COL_GAP = 48, PAD_T = 8;
-    const COL_W = TIE_W + COL_GAP;
+    // --- live projection: fill empty slots from group standings + feeder winners ---
+    const standCache = {};
+    const stand = (g) => standCache[g] || (standCache[g] = groupStandings(g));
+    const groupDone = {};
+    "ABCDEFGHIJKL".split("").forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
+    const winnerOf = (f) => { if (!f || !f.played) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
+    const loserOf = (f) => { const w = winnerOf(f); return w ? (w === f.home ? f.away : f.home) : null; };
+    function resolveSide(f, which) {
+      const actual = which === "home" ? f.home : f.away;
+      if (actual && actual !== "TBD") return { team: actual, proj: false };
+      const src = which === "home" ? f.srcHome : f.srcAway;
+      if (f.round === "R32") {
+        const m = /^([A-L])([12])$/.exec(src || "");
+        if (m && groupDone[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
+        return { team: null, src };
+      }
+      const feeder = byId[which === "home" ? f.feedHome : f.feedAway];
+      const t = f.round === "3P" ? loserOf(feeder) : winnerOf(feeder);
+      return t ? { team: t, proj: true, src } : { team: null, src };
+    }
 
-    // vertical leaf order = depth-first walk of the tree from the final
-    const leafOrder = [];
+    // --- geometry (top → bottom) ---
+    const TIE_W = 124, TIE_H = 46, UNIT = 138, ROW_GAP = 46, PAD_L = 60, PAD_T = 6;
+    const ROW_H = TIE_H + ROW_GAP;
+    const leaf = [];
     (function dfs(id) {
-      const f = byId[id];
-      if (!f) return;
-      if (f.round === "R32") { if (!leafOrder.includes(id)) leafOrder.push(id); return; }
+      const f = byId[id]; if (!f) return;
+      if (f.round === "R32") { if (!leaf.includes(id)) leaf.push(id); return; }
       dfs(f.feedHome); dfs(f.feedAway);
     })("F-1");
-    D.knockoutFixtures.filter((f) => f.round === "R32").forEach((f) => { if (!leafOrder.includes(f.id)) leafOrder.push(f.id); });
+    D.knockoutFixtures.filter((f) => f.round === "R32").forEach((f) => { if (!leaf.includes(f.id)) leaf.push(f.id); });
+    const cxm = {};
+    leaf.forEach((id, i) => { cxm[id] = PAD_L + i * UNIT + UNIT / 2; });
+    const cx = (id) => cxm[id] != null ? cxm[id] : (cxm[id] = (cx(byId[id].feedHome) + cx(byId[id].feedAway)) / 2);
+    rows.forEach((r) => D.knockoutFixtures.filter((f) => f.round === r).forEach((f) => cx(f.id)));
+    const yTop = (round) => PAD_T + depth[round] * ROW_H;
+    const totalW = PAD_L + leaf.length * UNIT + 16;
+    const totalH = PAD_T + rows.length * ROW_H;
 
-    const centerY = {};
-    leafOrder.forEach((id, i) => { centerY[id] = PAD_T + i * UNIT + UNIT / 2; });
-    function cy(id) {
-      if (centerY[id] != null) return centerY[id];
-      const f = byId[id];
-      centerY[id] = (cy(f.feedHome) + cy(f.feedAway)) / 2;
-      return centerY[id];
-    }
-    cols.forEach((r) => D.knockoutFixtures.filter((f) => f.round === r).forEach((f) => cy(f.id)));
-
-    const totalH = PAD_T * 2 + leafOrder.length * UNIT;
-    const totalW = cols.length * COL_W;
-
-    // connector lines
     let paths = "";
     D.knockoutFixtures.forEach((f) => {
       if (f.round === "R32" || f.round === "3P") return;
-      const xc = colIndex[f.round] * COL_W;
+      const yc = yTop(f.round), xc = cx(f.id);
       [f.feedHome, f.feedAway].forEach((fid) => {
         const pf = byId[fid]; if (!pf) return;
-        const xf = colIndex[pf.round] * COL_W + TIE_W;
-        const midX = (xf + xc) / 2;
-        paths += `<path d="M ${xf} ${cy(fid)} H ${midX} V ${cy(f.id)} H ${xc}"/>`;
+        const xf = cx(fid), yf = yTop(pf.round) + TIE_H, midY = (yf + yc) / 2;
+        paths += `<path d="M ${xf} ${yf} V ${midY} H ${xc} V ${yc}"/>`;
       });
     });
 
     const box = (f, absolute) => {
-      const mine = ME && (ownerOf[f.home] === ME || ownerOf[f.away] === ME);
-      const side = (which) => {
-        const team = which === "home" ? f.home : f.away;
-        const src = which === "home" ? f.srcHome : f.srcAway;
+      const H = resolveSide(f, "home"), A = resolveSide(f, "away");
+      const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
+      const sideHtml = (S, which) => {
         const score = f.played ? (which === "home" ? f.homeScore : f.awayScore) : "";
-        const isWin = f.played && (f.winner ? f.winner === team
+        const isWin = f.played && S.team && (f.winner ? f.winner === S.team
           : which === "home" ? f.homeScore > f.awayScore : f.awayScore > f.homeScore);
-        const badge = isWin && f.decided && f.decided !== "reg"
-          ? `<sup class="bdg">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
-        const label = (team && team !== "TBD") ? teamLabel(team) : `<span class="src">${esc(src || "TBD")}</span>`;
+        const badge = isWin && f.decided && f.decided !== "reg" ? `<sup class="bdg">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
+        const label = S.team
+          ? (S.proj ? `<span class="proj">${teamLabel(S.team)}</span>` : teamLabel(S.team))
+          : `<span class="src">${esc(S.src || "TBD")}</span>`;
         return `<div class="bxline ${isWin ? "win" : ""}">${label}<span class="bs">${score}${badge}</span></div>`;
       };
-      const pos = absolute ? `style="left:${colIndex[f.round] * COL_W}px;top:${cy(f.id) - TIE_H / 2}px;width:${TIE_W}px;height:${TIE_H}px"` : `style="width:${TIE_W}px"`;
-      const title = `${f.home === "TBD" ? f.srcHome : f.home} vs ${f.away === "TBD" ? f.srcAway : f.away}${f.date ? " — " + fmtDate(f.date) : ""}`;
-      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} title="${esc(title)}">${side("home")}${side("away")}</div>`;
+      const pos = absolute
+        ? `style="left:${cx(f.id) - TIE_W / 2}px;top:${yTop(f.round)}px;width:${TIE_W}px;height:${TIE_H}px"`
+        : `style="width:${TIE_W}px"`;
+      const title = `${H.team || H.src} vs ${A.team || A.src}${f.date ? " — " + fmtDate(f.date) : ""}`;
+      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} title="${esc(title)}">${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
     };
 
-    const boxes = cols.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
-    const headers = cols.map((r) => `<span class="bh" style="width:${COL_W}px">${ROUND_TITLE[r]}</span>`).join("");
+    const boxes = rows.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
+    const labels = rows.map((r) => `<span class="brow" style="top:${yTop(r)}px;height:${TIE_H}px">${ROUND_SHORT[r]}</span>`).join("");
     const tp = byId["3P-1"];
 
     return `<div class="bracket2-wrap">
-      <div class="bhead" style="width:${totalW}px">${headers}</div>
       <div class="bracket2" style="width:${totalW}px;height:${totalH}px">
         <svg class="blines" width="${totalW}" height="${totalH}" aria-hidden="true">${paths}</svg>
+        ${labels}
         ${boxes}
       </div>
       ${tp ? `<div class="tp"><h4>${ROUND_TITLE["3P"]}</h4>${box(tp, false)}</div>` : ""}
-      ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Ties with your teams are highlighted</p>` : ""}
+      ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Your teams are highlighted · italic = projected from latest results</p>` : ""}
     </div>`;
   }
 
