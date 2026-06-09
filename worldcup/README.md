@@ -6,44 +6,41 @@ between **Dazzo, Cones, Alex, Bilal, and Leo**. No build step, no server.
 ## Run it
 
 Open `index.html` in any browser (double-click it), or host the `worldcup/`
-folder on any static web server — both work. Results update automatically (see
-below); you can also edit `data.js` by hand.
+folder on any static web server — both work. There's a sign-in screen: enter
+your name (Dazzo / Cones / Alex / Bilal / Leo) and the site reveals itself. Once
+you're in, results load automatically; you can also edit `data.js` by hand.
 
 ## Files
 
 | File | What it is |
 |------|------------|
-| `index.html` | Page shell + tab navigation |
+| `index.html` | Page shell, sign-in gate + tab navigation |
 | `styles.css` | All styling |
-| `app.js` | Scoring + standings + rendering (you shouldn't need to touch this) |
-| `live.js` | In-browser auto-fetch of results from TheSportsDB |
-| `update.js` | Node script that bakes results into `data.js` (for deployments) |
+| `app.js` | Sign-in, scoring, standings + rendering (you shouldn't need to touch this) |
+| `live.js` | Fetches & merges results from ESPN's public API |
 | `data.js` | Teams, players, fixtures, results + config — hand-editable |
 
 ## Automatic results
 
-Results come from **[TheSportsDB](https://www.thesportsdb.com)** (free, no
-sign-up, CORS-enabled), FIFA World Cup league `4429`, season `2026`. There are
-two independent ways results stay current — use either or both:
+Results come from **ESPN's public soccer API** — no key, no sign-up, and it's
+CORS-enabled so the browser can call it directly. **One request returns all 104
+matches**, including the per-team winner flag and penalty-shootout tallies, so
+**knockout winners (including shootouts) are detected automatically**.
 
-1. **In-browser** (`live.js`): on page load and every 2 minutes, the page
-   fetches the latest scores and merges them. If the API is unreachable it
-   silently falls back to whatever is saved in `data.js`. A status line and a
-   **Refresh** button show the state. Responses are cached for ~60s in
-   `localStorage` to avoid hammering the shared key.
-2. **Server-side** (`update.js` + GitHub Action): a scheduled job bakes results
-   into `data.js` so a deployed site serves fresh **static** data without each
-   visitor calling the API. See *Deploying online* below.
+- The fetch happens **in-browser, once, right after you sign in** (there's no
+  background polling and no server/cron). A status line shows the result, and a
+  **Refresh** button re-pulls on demand.
+- If ESPN is unreachable, it silently falls back to whatever is saved in
+  `data.js`.
+- Matching logic: group games match by team pair; knockout games are matched by
+  ESPN's stable event id (baked into `config.live.koEventRounds`), so results
+  land in the correct round even though the group and knockout date windows
+  overlap and team names only resolve as the bracket fills in.
 
-Both reuse the same matching logic: group games match by team pair; knockout
-results are slotted into the bracket by their date window. Penalty-shootout
-**winners** can't always be inferred from a level score — if needed, set
-`winner` manually (see below).
-
-All live settings live in `data.js → config.live` (`enabled`, `key`, `league`,
-`season`, team-name `aliases`, `knockoutWindows`). Set `enabled: false` to turn
-off in-browser fetching entirely. The bundled key `"3"` is TheSportsDB's shared
-free key; for a busy public site you can drop in your own free key there.
+Settings live in `data.js → config.live`: `enabled` (set `false` for fully
+manual), `url` (the ESPN endpoint/date range), team-name `aliases`, and
+`koEventRounds` (the event-id → round map). The only ESPN names that differ from
+ours are aliased already: Bosnia-Herzegovina, Congo DR, Türkiye, Curaçao.
 
 ## Scoring rules
 
@@ -61,28 +58,19 @@ These live in `data.js → config.points` and can be changed.
 The site is plain static files, so any host works (GitHub Pages, Netlify,
 Vercel, S3, your own server). Upload the `worldcup/` folder — paths are all
 relative, so it works from a subfolder too. Serve over **HTTPS** so the results
-fetch (also HTTPS) isn't blocked as mixed content.
+fetch (also HTTPS) isn't blocked as mixed content. There's no build step, no
+server, and nothing scheduled: every visitor's browser pulls results from ESPN
+when they sign in.
 
-For a public site, prefer the **server-side** updater so visitors never call the
-third-party API themselves (no shared-key rate limits, no dependency on the API
-being reachable from every browser):
-
-- The included GitHub Action (`.github/workflows/wc-update-results.yml`) runs
-  `node worldcup/update.js` every 15 minutes and commits the refreshed
-  `data.js`. If your host auto-deploys from the repo (GitHub Pages / Netlify /
-  Vercel), the live site updates on its own. Scheduled Actions run on the
-  **default branch**, so merge this there to activate it.
-- Run it manually anytime with `node worldcup/update.js`.
-
-If you'd rather not run the Action, leave `config.live.enabled: true` and the
-in-browser fetch keeps the page live on its own — just note every visitor's
-browser then calls TheSportsDB directly.
+> Note: the sign-in is a friendly name-picker for personalisation, **not
+> security** — it's all client-side, so anyone can pick any of the five names.
+> For real access control you'd need a host-level password or a backend.
 
 ## Updating results manually (≈30 seconds)
 
-Auto-updates aside, you can always edit `data.js` directly — handy for fixing a
-penalty-shootout winner or correcting the API. Find the fixture, edit it, refresh.
-Add `"lock": true` to any fixture to stop live updates from overwriting your edit.
+Auto-updates aside, you can always edit `data.js` directly — handy for a quick
+correction. Find the fixture, edit it, refresh. Add `"lock": true` to any
+fixture to stop live updates from overwriting your edit.
 
 ### Group match
 
@@ -140,11 +128,11 @@ separate card on the Players tab). The five names and their order come from
 ## Notes on the data
 
 - **Groups** are the real, official final draw (drawn 5 Dec 2025).
-- **Group fixtures** are the full round-robin (6 per group, 72 total). A handful
-  of kickoff dates are confirmed; the rest are placeholders within the correct
-  matchday windows — edit the `date` field (`"YYYY-MM-DD"`) to correct any.
+- **Group fixtures** are the full round-robin (6 per group, 72 total). Real
+  dates are synced from ESPN on sign-in; the seed dates are just a fallback.
 - **Knockout fixtures** are structural placeholders (16 R32 + 8 R16 + 4 QF +
-  2 SF + 1 third place + 1 final = 32) with dates in the official windows.
+  2 SF + 1 third place + 1 final = 32). As each round resolves, ESPN fills in
+  the real teams, scores, and how each tie was decided automatically.
 
 ## Manually marking a team out
 

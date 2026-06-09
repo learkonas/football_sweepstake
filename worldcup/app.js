@@ -304,8 +304,7 @@
       who.classList.add("show");
       who.addEventListener("click", () => { try { localStorage.removeItem(ME_KEY); } catch (_) {} location.reload(); });
     }
-    refreshLive(false); // <-- the API is only called once the user is inside
-    if (window.WC_LIVE && window.WC_LIVE.enabled(D)) setInterval(() => refreshLive(false), 120000);
+    refreshLive(false); // <-- the API is called once, when the user signs in
   }
 
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;

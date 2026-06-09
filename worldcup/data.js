@@ -1,7 +1,5 @@
 // World Cup 2026 Sweepstake — data file.
 // Edit results here, then refresh the page. See README.md for the schema.
-// Auto-updated by update.js. Add "lock": true to a fixture to protect a
-// manual edit from being overwritten by live data.
 window.WC_DATA = {
   "config": {
     "points": {
@@ -25,46 +23,47 @@ window.WC_DATA = {
     ],
     "live": {
       "enabled": true,
-      "league": "4429",
-      "season": "2026",
-      "key": "3",
+      "source": "espn",
+      "url": "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard?dates=20260611-20260719&limit=400",
       "aliases": {
-        "Czech Republic": "Czechia",
-        "USA": "United States",
         "Bosnia-Herzegovina": "Bosnia and Herzegovina",
-        "Curaçao": "Curacao",
-        "Korea Republic": "South Korea",
-        "IR Iran": "Iran",
+        "Congo DR": "DR Congo",
         "Türkiye": "Turkey",
-        "Cape Verde Islands": "Cape Verde",
-        "Côte d'Ivoire": "Ivory Coast",
-        "Congo DR": "DR Congo"
+        "Curaçao": "Curacao"
       },
-      "knockoutWindows": {
-        "R32": [
-          "2026-06-28",
-          "2026-07-03"
-        ],
-        "R16": [
-          "2026-07-04",
-          "2026-07-07"
-        ],
-        "QF": [
-          "2026-07-09",
-          "2026-07-11"
-        ],
-        "SF": [
-          "2026-07-14",
-          "2026-07-15"
-        ],
-        "3P": [
-          "2026-07-18",
-          "2026-07-18"
-        ],
-        "F": [
-          "2026-07-19",
-          "2026-07-19"
-        ]
+      "koEventRounds": {
+        "760486": "R32",
+        "760487": "R32",
+        "760488": "R32",
+        "760489": "R32",
+        "760490": "R32",
+        "760491": "R32",
+        "760492": "R32",
+        "760493": "R32",
+        "760494": "R32",
+        "760495": "R32",
+        "760496": "R32",
+        "760497": "R32",
+        "760498": "R32",
+        "760499": "R32",
+        "760500": "R32",
+        "760501": "R32",
+        "760502": "R16",
+        "760503": "R16",
+        "760504": "R16",
+        "760505": "R16",
+        "760506": "R16",
+        "760507": "R16",
+        "760508": "R16",
+        "760509": "R16",
+        "760510": "QF",
+        "760511": "QF",
+        "760512": "QF",
+        "760513": "QF",
+        "760514": "SF",
+        "760515": "SF",
+        "760516": "3P",
+        "760517": "F"
       }
     }
   },
@@ -338,7 +337,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "South Korea",
       "away": "Czechia",
-      "date": "2026-06-12",
+      "date": "2026-06-11",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -410,7 +409,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Qatar",
       "away": "Switzerland",
-      "date": "2026-06-13",
+      "date": "2026-06-11",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -542,7 +541,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "United States",
       "away": "Paraguay",
-      "date": "2026-06-13",
+      "date": "2026-06-12",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -554,7 +553,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Australia",
       "away": "Turkey",
-      "date": "2026-06-14",
+      "date": "2026-06-12",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -614,7 +613,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Germany",
       "away": "Curacao",
-      "date": "2026-06-14",
+      "date": "2026-06-13",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -626,7 +625,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Ivory Coast",
       "away": "Ecuador",
-      "date": "2026-06-14",
+      "date": "2026-06-13",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -698,7 +697,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Sweden",
       "away": "Tunisia",
-      "date": "2026-06-15",
+      "date": "2026-06-13",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -758,7 +757,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Belgium",
       "away": "Egypt",
-      "date": "2026-06-15",
+      "date": "2026-06-14",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -830,7 +829,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Spain",
       "away": "Cape Verde",
-      "date": "2026-06-15",
+      "date": "2026-06-14",
       "city": "",
       "homeScore": null,
       "awayScore": null,
