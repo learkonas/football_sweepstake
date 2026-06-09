@@ -62,15 +62,30 @@
     const groupByPair = {};
     D.groupFixtures.forEach((f) => { groupByPair[pairKey(f.home, f.away)] = f; });
 
-    const koRounds = cfg(D).koEventRounds || {};
+    const koSlots = cfg(D).koEventSlots || {};
+    const koById = {};
+    D.knockoutFixtures.forEach((f) => { koById[f.id] = f; });
+    const ourTeams = new Set(D.teams.map((t) => t.name));
     let updated = 0, finished = 0;
-    const koByRound = {};
 
     events.forEach((ev) => {
       if (!ev.home || !ev.away) return;
-      const round = koRounds[ev.id];
-      if (round) {                       // knockout event (classified by stable id)
-        (koByRound[round] = koByRound[round] || []).push(ev);
+      const slotId = koSlots[ev.id];
+      if (slotId) {                      // knockout event -> exact bracket slot
+        const f = koById[slotId];
+        if (!f || f.lock) return;
+        const home = canon(ev.home), away = canon(ev.away);
+        const resolved = ourTeams.has(home) && ourTeams.has(away);
+        if (ev.date) f.date = ev.date;
+        if (resolved) { f.home = home; f.away = away; }
+        if (ev.finished && resolved) {
+          f.homeScore = ev.homeScore; f.awayScore = ev.awayScore;
+          f.decided = decidedOf(ev);
+          f.winner = ev.homeWin ? home : ev.awayWin ? away
+                    : (ev.homeScore > ev.awayScore ? home : ev.awayScore > ev.homeScore ? away : null);
+          f.played = true;
+          finished++;
+        }
         return;
       }
       // group event — match by team pair
@@ -87,36 +102,7 @@
       updated++;
     });
 
-    finished += mergeKnockouts(D, koByRound, canon);
     return { updated, finished };
-  }
-
-  function mergeKnockouts(D, koByRound, canon) {
-    const ourTeams = new Set(D.teams.map((t) => t.name));
-    let finished = 0;
-    Object.keys(koByRound).forEach((round) => {
-      const slots = D.knockoutFixtures.filter((f) => f.round === round);
-      // stable order so a given ESPN tie always maps to the same bracket slot
-      const evs = koByRound[round].slice()
-        .sort((a, b) => (a.date || "").localeCompare(b.date || "") || a.id.localeCompare(b.id));
-      evs.forEach((ev, i) => {
-        const f = slots[i];
-        if (!f || f.lock) return;
-        const home = canon(ev.home), away = canon(ev.away);
-        const resolved = ourTeams.has(home) && ourTeams.has(away);
-        if (ev.date) f.date = ev.date;
-        if (resolved) { f.home = home; f.away = away; }
-        if (ev.finished && resolved) {
-          f.homeScore = ev.homeScore; f.awayScore = ev.awayScore;
-          f.decided = decidedOf(ev);
-          f.winner = ev.homeWin ? home : ev.awayWin ? away
-                    : (ev.homeScore > ev.awayScore ? home : ev.awayScore > ev.homeScore ? away : null);
-          f.played = true;
-          finished++;
-        }
-      });
-    });
-    return finished;
   }
 
   // ---- public API ----

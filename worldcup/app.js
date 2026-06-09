@@ -196,17 +196,84 @@
     </div>`;
   }
 
+  const ROUND_TITLE = { R32: "Round of 32", R16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", "3P": "Third place", F: "Final" };
+
   function renderBracket() {
-    const order = [["R32", "Round of 32"], ["R16", "Round of 16"], ["QF", "Quarter-finals"], ["SF", "Semi-finals"], ["3P", "Third place"], ["F", "Final"]];
-    return `<div class="bracket">` + order.map(([r, title]) => {
-      const ties = D.knockoutFixtures.filter((f) => f.round === r).map((f) => `
-        <div class="tie ${f.played ? "done" : ""}">
-          <div class="tieline">${teamLabel(f.home)}<span class="ts">${f.played ? f.homeScore : ""}</span></div>
-          <div class="tieline">${teamLabel(f.away)}<span class="ts">${f.played ? f.awayScore : ""}</span></div>
-          <div class="tiefoot">${fmtDate(f.date)}${f.played && f.decided && f.decided !== "reg" ? ` &middot; ${f.decided === "pens" ? "pens" : "AET"}` : ""}</div>
-        </div>`).join("");
-      return `<div class="round"><h3>${title}</h3>${ties}</div>`;
-    }).join("") + `</div>`;
+    const byId = {};
+    D.knockoutFixtures.forEach((f) => { byId[f.id] = f; });
+    const cols = ["R32", "R16", "QF", "SF", "F"];
+    const colIndex = { R32: 0, R16: 1, QF: 2, SF: 3, F: 4 };
+
+    const TIE_W = 160, TIE_H = 46, UNIT = 62, COL_GAP = 48, PAD_T = 8;
+    const COL_W = TIE_W + COL_GAP;
+
+    // vertical leaf order = depth-first walk of the tree from the final
+    const leafOrder = [];
+    (function dfs(id) {
+      const f = byId[id];
+      if (!f) return;
+      if (f.round === "R32") { if (!leafOrder.includes(id)) leafOrder.push(id); return; }
+      dfs(f.feedHome); dfs(f.feedAway);
+    })("F-1");
+    D.knockoutFixtures.filter((f) => f.round === "R32").forEach((f) => { if (!leafOrder.includes(f.id)) leafOrder.push(f.id); });
+
+    const centerY = {};
+    leafOrder.forEach((id, i) => { centerY[id] = PAD_T + i * UNIT + UNIT / 2; });
+    function cy(id) {
+      if (centerY[id] != null) return centerY[id];
+      const f = byId[id];
+      centerY[id] = (cy(f.feedHome) + cy(f.feedAway)) / 2;
+      return centerY[id];
+    }
+    cols.forEach((r) => D.knockoutFixtures.filter((f) => f.round === r).forEach((f) => cy(f.id)));
+
+    const totalH = PAD_T * 2 + leafOrder.length * UNIT;
+    const totalW = cols.length * COL_W;
+
+    // connector lines
+    let paths = "";
+    D.knockoutFixtures.forEach((f) => {
+      if (f.round === "R32" || f.round === "3P") return;
+      const xc = colIndex[f.round] * COL_W;
+      [f.feedHome, f.feedAway].forEach((fid) => {
+        const pf = byId[fid]; if (!pf) return;
+        const xf = colIndex[pf.round] * COL_W + TIE_W;
+        const midX = (xf + xc) / 2;
+        paths += `<path d="M ${xf} ${cy(fid)} H ${midX} V ${cy(f.id)} H ${xc}"/>`;
+      });
+    });
+
+    const box = (f, absolute) => {
+      const mine = ME && (ownerOf[f.home] === ME || ownerOf[f.away] === ME);
+      const side = (which) => {
+        const team = which === "home" ? f.home : f.away;
+        const src = which === "home" ? f.srcHome : f.srcAway;
+        const score = f.played ? (which === "home" ? f.homeScore : f.awayScore) : "";
+        const isWin = f.played && (f.winner ? f.winner === team
+          : which === "home" ? f.homeScore > f.awayScore : f.awayScore > f.homeScore);
+        const badge = isWin && f.decided && f.decided !== "reg"
+          ? `<sup class="bdg">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
+        const label = (team && team !== "TBD") ? teamLabel(team) : `<span class="src">${esc(src || "TBD")}</span>`;
+        return `<div class="bxline ${isWin ? "win" : ""}">${label}<span class="bs">${score}${badge}</span></div>`;
+      };
+      const pos = absolute ? `style="left:${colIndex[f.round] * COL_W}px;top:${cy(f.id) - TIE_H / 2}px;width:${TIE_W}px;height:${TIE_H}px"` : `style="width:${TIE_W}px"`;
+      const title = `${f.home === "TBD" ? f.srcHome : f.home} vs ${f.away === "TBD" ? f.srcAway : f.away}${f.date ? " — " + fmtDate(f.date) : ""}`;
+      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} title="${esc(title)}">${side("home")}${side("away")}</div>`;
+    };
+
+    const boxes = cols.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
+    const headers = cols.map((r) => `<span class="bh" style="width:${COL_W}px">${ROUND_TITLE[r]}</span>`).join("");
+    const tp = byId["3P-1"];
+
+    return `<div class="bracket2-wrap">
+      <div class="bhead" style="width:${totalW}px">${headers}</div>
+      <div class="bracket2" style="width:${totalW}px;height:${totalH}px">
+        <svg class="blines" width="${totalW}" height="${totalH}" aria-hidden="true">${paths}</svg>
+        ${boxes}
+      </div>
+      ${tp ? `<div class="tp"><h4>${ROUND_TITLE["3P"]}</h4>${box(tp, false)}</div>` : ""}
+      ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Ties with your teams are highlighted</p>` : ""}
+    </div>`;
   }
 
   function renderPlayers() {

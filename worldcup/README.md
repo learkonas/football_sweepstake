@@ -84,11 +84,19 @@ and the leaderboard all recompute automatically.
 
 ### Knockout match
 
-Knockouts start as `"TBD" vs "TBD"` placeholders. As each round resolves, fill
-in the real team names plus the result:
+The **Knockout tab draws a connected bracket** — all 16 Round-of-32 ties feeding
+round by round into the final, with connector lines showing the route. Until a
+tie's teams are known, the slot shows where they come from (e.g. `A2`, `B2`,
+`3rd A/B/C/D/F`, or `Winner R32-1`). Ties involving the signed-in player's teams
+are highlighted.
+
+Knockout fixtures have stable ids by bracket position (`R32-1` … `R32-16`,
+`R16-1` … `R16-8`, `QF-1` … `QF-4`, `SF-1`, `SF-2`, `3P-1`, `F-1`) plus the
+feeder links (`feedHome` / `feedAway`) that define the tree. ESPN fills the real
+teams and results in automatically; to edit one by hand:
 
 ```js
-{ "id": "KO1", "round": "R32",
+{ "id": "R32-1", "round": "R32",
   "home": "Brazil", "away": "Scotland",
   "homeScore": 1, "awayScore": 1,
   "decided": "pens",        // "reg" | "et" | "pens"
@@ -97,8 +105,8 @@ in the real team names plus the result:
 ```
 
 - `decided`: `"reg"` (90 min), `"et"` (extra time), or `"pens"` (shootout).
-- `winner`: only needed for `"pens"` (scores are level); otherwise the higher
-  score wins automatically.
+- `winner`: ESPN provides this (incl. shootouts). For a manual `"pens"` edit set
+  it yourself, since the scores are level; otherwise the higher score wins.
 - The **loser of any played knockout match is auto-greyed-out** as eliminated
   across the whole site.
 
