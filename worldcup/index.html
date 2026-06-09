@@ -6,7 +6,28 @@
   <title>World Cup 2026 Sweepstake</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body>
+<body class="locked">
+  <!-- ===== Gate / login ===== -->
+  <div id="gate" class="gate">
+    <div class="gate-bg"></div>
+    <div class="gate-grain"></div>
+    <div class="gate-card">
+      <div class="gate-trophy">🏆</div>
+      <p class="gate-kicker">Canada · Mexico · USA · 2026</p>
+      <h1 class="gate-title">World Cup <span>Sweepstake</span></h1>
+      <p class="gate-sub">Enter your name to step inside</p>
+      <form id="gate-form" autocomplete="off">
+        <input id="gate-input" type="text" placeholder="Your name…" aria-label="Your name" spellcheck="false" />
+        <button type="submit" class="gate-go">Enter →</button>
+      </form>
+      <div class="gate-chips" id="gate-chips"></div>
+      <p class="gate-error" id="gate-error"></p>
+    </div>
+  </div>
+  <canvas id="confetti" class="confetti"></canvas>
+
+  <!-- ===== Main site ===== -->
+  <div id="site" class="site">
   <header>
     <h1>World Cup 2026 <span>Sweepstake</span></h1>
     <p class="tagline">Canada &middot; Mexico &middot; USA &bull; 11 Jun &ndash; 19 Jul 2026</p>
@@ -19,6 +40,8 @@
   </header>
 
   <div class="livebar">
+    <span id="whoami" class="whoami"></span>
+    <span class="livebar-spacer"></span>
     <span id="live-status" class="live-status">&hellip;</span>
     <button id="live-refresh" class="live-refresh" title="Fetch latest results">Refresh</button>
   </div>
@@ -28,6 +51,7 @@
   <footer>
     <p>Results update automatically from TheSportsDB. You can also edit <code>data.js</code> by hand &mdash; see <code>README.md</code>.</p>
   </footer>
+  </div><!-- /#site -->
 
   <script src="data.js"></script>
   <script src="live.js"></script>

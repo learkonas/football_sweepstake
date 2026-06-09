@@ -8,6 +8,7 @@
 
   const PTS = D.config.points;
   const PLAYERS = D.config.playerOrder;
+  let ME = null; // the signed-in player
   const PLAYER_COLORS = ["#e63946", "#2a9d8f", "#e9a020", "#5b6cf0", "#9b5de5"];
   const colorFor = (p) => PLAYER_COLORS[PLAYERS.indexOf(p) % PLAYER_COLORS.length];
 
@@ -139,7 +140,7 @@
       stats[b].pts - stats[a].pts || stats[b].win - stats[a].win || stats[b].alive - stats[a].alive);
     const rows = ranked.map((p, i) => {
       const s = stats[p];
-      return `<tr>
+      return `<tr class="${p === ME ? "me" : ""}">
         <td class="rank">${i + 1}</td>
         <td><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)}</td>
         <td class="pts">${s.pts}</td>
@@ -217,7 +218,7 @@
           <span>${teamLabel(t)} <small class="grp">${teamGroup[t] || ""}</small></span>
           <b>${s.teamPts[t]} pt${s.teamPts[t] === 1 ? "" : "s"}</b>
         </li>`).join("");
-      return `<section class="card player">
+      return `<section class="card player ${p === ME ? "me" : ""}">
         <h3><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)} <span class="ptotal">${s.pts} pts</span></h3>
         <p class="sub">${s.alive}/${D.players[p].length} teams still alive</p>
         <ul class="teamlist">${teams}</ul>
@@ -263,7 +264,7 @@
     location.hash = name;
   }
   tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.view)));
-  show(views[location.hash.slice(1)] ? location.hash.slice(1) : "leaderboard");
+  // initial render is deferred to start(), which runs only after a valid login.
 
   // ---- live results ----
   const statusEl = document.getElementById("live-status");
@@ -286,7 +287,109 @@
     }
   }
   if (refreshBtn) refreshBtn.addEventListener("click", () => refreshLive(true));
-  refreshLive(false);
-  // auto-refresh every 2 minutes while the page is open
-  if (window.WC_LIVE && window.WC_LIVE.enabled(D)) setInterval(() => refreshLive(false), 120000);
+
+  // ---- gate / login ----
+  // Nothing renders and NO API call happens until a valid player signs in.
+  const ME_KEY = "wc_user";
+  const PLAYERS_LC = {};
+  PLAYERS.forEach((p) => { PLAYERS_LC[p.toLowerCase()] = p; });
+  let started = false;
+
+  function start() {
+    if (started) return; started = true;
+    show(views[location.hash.slice(1)] ? location.hash.slice(1) : "leaderboard");
+    const who = document.getElementById("whoami");
+    if (who && ME) {
+      who.innerHTML = `<span class="pchip" style="background:${colorFor(ME)}"></span>Signed in as <b>${esc(ME)}</b> <span class="switch">switch</span>`;
+      who.classList.add("show");
+      who.addEventListener("click", () => { try { localStorage.removeItem(ME_KEY); } catch (_) {} location.reload(); });
+    }
+    refreshLive(false); // <-- the API is only called once the user is inside
+    if (window.WC_LIVE && window.WC_LIVE.enabled(D)) setInterval(() => refreshLive(false), 120000);
+  }
+
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function unlock(name, instant) {
+    ME = name;
+    try { localStorage.setItem(ME_KEY, name); } catch (_) {}
+    const gate = document.getElementById("gate");
+    const site = document.getElementById("site");
+    document.body.classList.remove("locked");
+    if (instant) {
+      if (gate) gate.style.display = "none";
+      if (site) site.classList.add("reveal");
+      start();
+      return;
+    }
+    if (!reduceMotion) fireConfetti();
+    if (gate) gate.classList.add("exit");
+    start();
+    requestAnimationFrame(() => { if (site) site.classList.add("reveal"); });
+    setTimeout(() => { if (gate) gate.style.display = "none"; }, 1000);
+  }
+
+  const gateForm = document.getElementById("gate-form");
+  const gateInput = document.getElementById("gate-input");
+  const gateChips = document.getElementById("gate-chips");
+  const gateErr = document.getElementById("gate-error");
+  const gateCard = document.querySelector(".gate-card");
+
+  function tryName(raw) {
+    const n = String(raw || "").trim().toLowerCase();
+    if (PLAYERS_LC[n]) { unlock(PLAYERS_LC[n], false); return; }
+    if (gateErr) gateErr.textContent = raw && raw.trim() ? `"${raw.trim()}" isn't on the list` : "Enter your name to continue";
+    if (gateCard) { gateCard.classList.remove("shake"); void gateCard.offsetWidth; gateCard.classList.add("shake"); }
+  }
+
+  if (gateChips) PLAYERS.forEach((p) => {
+    const b = document.createElement("button");
+    b.type = "button"; b.className = "gate-chip"; b.textContent = p;
+    b.addEventListener("click", () => unlock(p, false));
+    gateChips.appendChild(b);
+  });
+  if (gateForm) gateForm.addEventListener("submit", (e) => { e.preventDefault(); tryName(gateInput && gateInput.value); });
+
+  // already signed in this browser? skip straight in.
+  let saved = null; try { saved = localStorage.getItem(ME_KEY); } catch (_) {}
+  if (saved && PLAYERS_LC[saved.toLowerCase()]) unlock(PLAYERS_LC[saved.toLowerCase()], true);
+  else if (gateInput) gateInput.focus();
+
+  // ---- confetti burst (no dependencies) ----
+  function fireConfetti() {
+    const c = document.getElementById("confetti");
+    if (!c || !c.getContext) return;
+    const ctx = c.getContext("2d");
+    if (!ctx) return;
+    const dpr = window.devicePixelRatio || 1;
+    c.width = window.innerWidth * dpr; c.height = window.innerHeight * dpr;
+    const colors = ["#19c37d", "#e9a020", "#406cf0", "#9b5de5", "#ff6b6b", "#ffffff"];
+    const parts = Array.from({ length: 170 }, () => ({
+      x: window.innerWidth / 2 + (Math.random() - 0.5) * 160,
+      y: window.innerHeight * 0.52,
+      vx: (Math.random() - 0.5) * 18,
+      vy: -Math.random() * 17 - 6,
+      g: 0.34 + Math.random() * 0.22,
+      s: 4 + Math.random() * 7,
+      rot: Math.random() * Math.PI, vr: (Math.random() - 0.5) * 0.34,
+      color: colors[(Math.random() * colors.length) | 0],
+    }));
+    const t0 = performance.now();
+    (function frame(t) {
+      const el = t - t0;
+      ctx.clearRect(0, 0, c.width, c.height);
+      let alive = false;
+      const a = Math.max(0, 1 - el / 2600);
+      parts.forEach((p) => {
+        p.vy += p.g; p.x += p.vx; p.y += p.vy; p.vx *= 0.99; p.rot += p.vr;
+        if (a > 0 && p.y < window.innerHeight + 40) alive = true;
+        ctx.save(); ctx.globalAlpha = a;
+        ctx.translate(p.x * dpr, p.y * dpr); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.s * dpr / 2, -p.s * dpr / 2, p.s * dpr, p.s * dpr * 0.6);
+        ctx.restore();
+      });
+      if (alive) requestAnimationFrame(frame); else ctx.clearRect(0, 0, c.width, c.height);
+    })(t0);
+  }
 })();
