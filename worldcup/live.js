@@ -1,9 +1,16 @@
 /* Automatic results for the World Cup 2026 sweepstake.
    Source: ESPN's public soccer API (no key, CORS-enabled). One call returns
-   all 104 matches incl. scores, the per-team winner flag and penalty-shootout
-   tallies, so knockout winners (incl. shootouts) are detected automatically.
-   Merges onto window.WC_DATA in place; falls back silently to the data.js seed
-   when offline. See README.md. */
+   all 104 matches incl. scores, kickoff times, the per-team winner flag and
+   penalty-shootout tallies, so knockout winners (incl. shootouts) are detected
+   automatically.
+
+   Matching is by team identity, not fixture ids. Group games match on the team
+   pair. Knockout games are matched by projecting each bracket slot to the teams
+   it should contain (from group standings + feeder winners, via WC_ENGINE) and
+   pairing that with the ESPN game between those same two teams — so results land
+   in the right slot without any hand-maintained event-id table. Merges onto
+   window.WC_DATA in place; falls back silently to the data.js seed when offline.
+   See README.md. */
 (function () {
   "use strict";
 
@@ -32,9 +39,11 @@
       const h = cs.find((x) => x.homeAway === "home") || cs[0] || {};
       const a = cs.find((x) => x.homeAway === "away") || cs[1] || {};
       const ty = (c.status && c.status.type) || {};
+      const iso = String(c.date || e.date || "");
       return {
         id: String(e.id || ""),
-        date: String(c.date || e.date || "").slice(0, 10),
+        iso,                          // full kickoff timestamp (ISO, usually UTC)
+        date: iso.slice(0, 10),       // YYYY-MM-DD, used for matching
         home: (h.team && h.team.displayName) || "",
         away: (a.team && a.team.displayName) || "",
         homeScore: toNum(h.score),
@@ -58,44 +67,63 @@
   // ---- merge ----
   function merge(D, events) {
     const canon = buildCanon(D);
-    const pairKey = (a, b) => [a, b].sort().join(" | ");
-    const groupByPair = {};
-    D.groupFixtures.forEach((f) => { groupByPair[pairKey(f.home, f.away)] = f; });
-
-    const koSlots = cfg(D).koEventSlots || {};
-    const koById = {};
-    D.knockoutFixtures.forEach((f) => { koById[f.id] = f; });
-    const ourTeams = new Set(D.teams.map((t) => t.name));
+    const setKey = (a, b) => [a, b].sort().join(" | ");
+    // Earliest knockout date — the boundary between the group and knockout
+    // windows. Derived from the data so there's nothing to hand-maintain.
+    const koStart = D.knockoutFixtures.reduce((m, f) => (f.date && f.date < m) ? f.date : m, "9999-99-99");
+    const consumed = new Set();
     let updated = 0, finished = 0;
 
+    function applyResult(f, ev) {
+      const home = canon(ev.home);
+      f.homeScore = (home === f.home) ? ev.homeScore : ev.awayScore;
+      f.awayScore = (home === f.home) ? ev.awayScore : ev.homeScore;
+    }
+
+    // --- knockout: project each slot to its teams, match the ESPN game between
+    //     them. Round by round so later rounds see winners just applied. ---
+    const koBySet = {};
     events.forEach((ev) => {
-      if (!ev.home || !ev.away) return;
-      const slotId = koSlots[ev.id];
-      if (slotId) {                      // knockout event -> exact bracket slot
-        const f = koById[slotId];
-        if (!f || f.lock) return;
-        const home = canon(ev.home), away = canon(ev.away);
-        const resolved = ourTeams.has(home) && ourTeams.has(away);
-        if (ev.date) f.date = ev.date;
-        if (resolved) { f.home = home; f.away = away; }
-        if (ev.finished && resolved) {
-          f.homeScore = ev.homeScore; f.awayScore = ev.awayScore;
+      if (!ev.home || !ev.away || (ev.date && ev.date < koStart)) return; // group-window event
+      const k = setKey(canon(ev.home), canon(ev.away));
+      // A pair meets at most once in a knockout, but keep the latest just in case.
+      if (!koBySet[k] || ev.date > koBySet[k].date) koBySet[k] = ev;
+    });
+    const proj = window.WC_ENGINE.projector(D);
+    ["R32", "R16", "QF", "SF", "3P", "F"].forEach((round) => {
+      D.knockoutFixtures.filter((f) => f.round === round).forEach((f) => {
+        const t = proj.teams(f);
+        if (!t.home || !t.away) return;
+        const ev = koBySet[setKey(t.home, t.away)];
+        if (!ev || consumed.has(ev.id)) return;
+        consumed.add(ev.id);
+        if (f.lock) return;
+        if (ev.iso) { f.date = ev.date; f.kickoff = ev.iso; }
+        f.home = t.home; f.away = t.away;   // lock the resolved teams into the slot
+        if (ev.finished) {
+          applyResult(f, ev);
           f.decided = decidedOf(ev);
+          const home = canon(ev.home), away = canon(ev.away);
           f.winner = ev.homeWin ? home : ev.awayWin ? away
-                    : (ev.homeScore > ev.awayScore ? home : ev.awayScore > ev.homeScore ? away : null);
+            : (f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null);
           f.played = true;
           finished++;
         }
-        return;
-      }
-      // group event — match by team pair
-      const home = canon(ev.home), away = canon(ev.away);
-      const gf = groupByPair[pairKey(home, away)];
+        updated++;
+      });
+    });
+
+    // --- group: match by team pair within the group window ---
+    const groupByPair = {};
+    D.groupFixtures.forEach((f) => { groupByPair[setKey(f.home, f.away)] = f; });
+    events.forEach((ev) => {
+      if (consumed.has(ev.id) || !ev.home || !ev.away) return;
+      if (ev.date && ev.date >= koStart) return; // not a group-window event
+      const gf = groupByPair[setKey(canon(ev.home), canon(ev.away))];
       if (!gf || gf.lock) return;
-      if (ev.date) gf.date = ev.date;
+      if (ev.iso) { gf.date = ev.date; gf.kickoff = ev.iso; }
       if (ev.finished) {
-        gf.homeScore = (home === gf.home) ? ev.homeScore : ev.awayScore;
-        gf.awayScore = (home === gf.home) ? ev.awayScore : ev.homeScore;
+        applyResult(gf, ev);
         gf.played = true;
         finished++;
       }

@@ -16,7 +16,8 @@ you're in, results load automatically; you can also edit `data.js` by hand.
 |------|------------|
 | `index.html` | Page shell, sign-in gate + tab navigation |
 | `styles.css` | All styling |
-| `app.js` | Sign-in, scoring, standings + rendering (you shouldn't need to touch this) |
+| `app.js` | Sign-in, scoring + rendering (you shouldn't need to touch this) |
+| `engine.js` | Shared logic: group standings + the bracket projector |
 | `live.js` | Fetches & merges results from ESPN's public API |
 | `thirds.js` | FIFA Annex C lookup (which 3rd-placed teams go where) |
 | `data.js` | Teams, players, fixtures, results + config — hand-editable |
@@ -33,15 +34,17 @@ matches**, including the per-team winner flag and penalty-shootout tallies, so
   **Refresh** button re-pulls on demand.
 - If ESPN is unreachable, it silently falls back to whatever is saved in
   `data.js`.
-- Matching logic: group games match by team pair; knockout games are matched by
-  ESPN's stable event id (baked into `config.live.koEventRounds`), so results
-  land in the correct round even though the group and knockout date windows
-  overlap and team names only resolve as the bracket fills in.
+- Matching logic is **by team identity, so there's no fixture-id table to
+  maintain.** Group games match on the team pair. For knockouts, the app
+  projects each bracket slot to the two teams it should contain (from the group
+  standings + feeder winners) and pairs that with the ESPN game between those
+  same two teams — resolved round by round, so each round's winners feed the
+  next. Kickoff dates **and times** come from ESPN too and are shown on each tie.
 
 Settings live in `data.js → config.live`: `enabled` (set `false` for fully
-manual), `url` (the ESPN endpoint/date range), team-name `aliases`, and
-`koEventRounds` (the event-id → round map). The only ESPN names that differ from
-ours are aliased already: Bosnia-Herzegovina, Congo DR, Türkiye, Curaçao.
+manual), `url` (the ESPN endpoint/date range), and team-name `aliases`. The only
+ESPN names that differ from ours are aliased already: Bosnia-Herzegovina, Congo
+DR, Türkiye, Curaçao.
 
 ## Scoring rules
 
@@ -87,8 +90,10 @@ and the leaderboard all recompute automatically.
 
 The **Knockout tab draws a connected bracket top-to-bottom** — the 16
 Round-of-32 ties across the top flowing down round by round to the final, with
-connector lines showing the route. Slots fill in **automatically from the latest
-results**: once a group finishes, its winner/runner-up drop into the matching
+connector lines showing the route, and each tie captioned with its kickoff date
+and time. On narrow screens (phones) it switches to a **stacked, round-by-round
+list** so there's no sideways scrolling. Slots fill in **automatically from the
+latest results**: once a group finishes, its winner/runner-up drop into the matching
 R32 slots, and each tie's winner propagates down to the next round (projected
 teams show in italics until ESPN confirms them officially). When all 12 groups
 finish, the **8 best third-placed teams** are ranked and slotted into the right
@@ -100,7 +105,8 @@ player's teams are highlighted.
 Knockout fixtures have stable ids by bracket position (`R32-1` … `R32-16`,
 `R16-1` … `R16-8`, `QF-1` … `QF-4`, `SF-1`, `SF-2`, `3P-1`, `F-1`) plus the
 feeder links (`feedHome` / `feedAway`) that define the tree. ESPN fills the real
-teams and results in automatically; to edit one by hand:
+teams and results in automatically (matched by the teams in each tie, not by any
+fixture id); to edit one by hand:
 
 ```js
 { "id": "R32-1", "round": "R32",
