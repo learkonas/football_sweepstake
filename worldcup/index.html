@@ -31,11 +31,11 @@
   <header>
     <h1>World Cup 2026 <span>Sweepstake</span></h1>
     <p class="tagline">Canada &middot; Mexico &middot; USA &bull; 11 Jun &ndash; 19 Jul 2026</p>
-    <nav class="tabs">
-      <button class="tab active" data-view="leaderboard">Leaderboard</button>
-      <button class="tab" data-view="groups">Group Stage</button>
-      <button class="tab" data-view="bracket">Knockout</button>
-      <button class="tab" data-view="players">Players</button>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab active" data-view="leaderboard" role="tab" id="tab-leaderboard" aria-controls="content" aria-selected="true">Leaderboard</button>
+      <button class="tab" data-view="groups" role="tab" id="tab-groups" aria-controls="content" aria-selected="false">Group Stage</button>
+      <button class="tab" data-view="bracket" role="tab" id="tab-bracket" aria-controls="content" aria-selected="false">Knockout</button>
+      <button class="tab" data-view="players" role="tab" id="tab-players" aria-controls="content" aria-selected="false">Players</button>
     </nav>
   </header>
 
@@ -46,7 +46,7 @@
     <button id="live-refresh" class="live-refresh" title="Fetch latest results">Refresh</button>
   </div>
 
-  <main id="content"></main>
+  <main id="content" role="tabpanel" tabindex="0" aria-labelledby="tab-leaderboard"></main>
 
   <footer>
     <p>Results load automatically from ESPN when you sign in. You can also edit <code>data.js</code> by hand &mdash; see <code>README.md</code>.</p>

@@ -127,14 +127,16 @@
   }
 
   // ---- renderers ----
+  const MEDALS = ["🥇", "🥈", "🥉"];
   function renderLeaderboard() {
     const stats = playerStats();
     const ranked = PLAYERS.slice().sort((a, b) =>
       stats[b].pts - stats[a].pts || stats[b].win - stats[a].win || stats[b].alive - stats[a].alive);
     const rows = ranked.map((p, i) => {
       const s = stats[p];
-      return `<tr class="${p === ME ? "me" : ""}">
-        <td class="rank">${i + 1}</td>
+      const rank = MEDALS[i] ? `<span class="medal">${MEDALS[i]}</span>` : i + 1;
+      return `<tr class="${p === ME ? "me" : ""} ${i === 0 ? "leader" : ""}">
+        <td class="rank">${rank}</td>
         <td><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)}</td>
         <td class="pts">${s.pts}</td>
         <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
@@ -148,7 +150,44 @@
         <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
         <th title="Teams still in the tournament">Alive</th>
       </tr></thead><tbody>${rows}</tbody></table>
-      <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>`;
+      <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>
+      ${renderMatchCentre()}`;
+  }
+
+  // Compact match row for the leaderboard's match centre. Resolves knockout
+  // teams via the projector; group teams are already known.
+  function mcRow(f, P) {
+    const ko = f.round != null;
+    const H = ko ? P.side(f, "home") : { team: f.home, proj: false };
+    const A = ko ? P.side(f, "away") : { team: f.away, proj: false };
+    const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
+    const sh = bracketSideHtml(f, H, "home", "", "bdg");
+    const sa = bracketSideHtml(f, A, "away", "", "bdg");
+    const sc = f.played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
+    const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Grp ${f.group}`;
+    const today = f.date === todayStr() ? " today" : "";
+    return `<div class="mc-row ${f.played ? "done" : ""} ${mine ? "mine" : ""}${today}">
+      <span class="mc-when">${esc(fmtKick(f))}</span>
+      <span class="mc-tag">${esc(tag)}</span>
+      <span class="mc-match">
+        <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}</span>
+        <span class="mc-sc">${sc}${sh.badge || sa.badge}</span>
+        <span class="mc-side ${sa.isWin ? "win" : ""}">${sa.label}</span>
+      </span>
+    </div>`;
+  }
+
+  function renderMatchCentre() {
+    const P = window.WC_ENGINE.projector(D);
+    const all = D.groupFixtures.concat(D.knockoutFixtures);
+    const played = all.filter((f) => f.played).sort((a, b) => whenOf(b) - whenOf(a));
+    const upcoming = all.filter((f) => !f.played && f.date).sort((a, b) => whenOf(a) - whenOf(b));
+    const results = played.slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">No results in yet — kicks off ${esc(fmtDate(D.groupFixtures[0] && D.groupFixtures[0].date))}.</p>`;
+    const next = upcoming.slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">Tournament complete 🏆</p>`;
+    return `<div class="matchcentre">
+      <section class="mc-col"><h3>Latest results</h3>${results}</section>
+      <section class="mc-col"><h3>Coming up</h3>${next}</section>
+    </div>`;
   }
 
   function renderGroups() {
@@ -191,6 +230,11 @@
 
   const ROUND_TITLE = { R32: "Round of 32", R16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", "3P": "Third place", F: "Final" };
   const ROUND_SHORT = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", F: "Final" };
+  const ROUND_TAG = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", "3P": "3rd place", F: "Final" };
+
+  // Today (local) as YYYY-MM-DD, and a sortable kickoff time for any fixture.
+  const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const whenOf = (f) => new Date(f.kickoff || ((f.date || "9999-12-31") + "T12:00:00")).getTime();
 
   // One side of a tie, as HTML: team (italic if projected) or its source label,
   // plus the score and an aet/pens badge on the winner. Shared by both layouts.
@@ -361,10 +405,25 @@
   function show(name) {
     current = name;
     content.innerHTML = views[name]();
-    tabs.forEach((t) => t.classList.toggle("active", t.dataset.view === name));
+    tabs.forEach((t) => {
+      const on = t.dataset.view === name;
+      t.classList.toggle("active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    content.setAttribute("aria-labelledby", "tab-" + name);
     location.hash = name;
   }
   tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.view)));
+  // Arrow-key navigation across the tablist (WAI-ARIA tabs pattern).
+  const tabList = Array.from(tabs);
+  tabList.forEach((t, i) => t.addEventListener("keydown", (e) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : e.key === "Home" ? "first" : e.key === "End" ? "last" : 0;
+    if (!d) return;
+    e.preventDefault();
+    const next = d === "first" ? tabList[0] : d === "last" ? tabList[tabList.length - 1] : tabList[(i + d + tabList.length) % tabList.length];
+    next.focus();
+    show(next.dataset.view);
+  }));
   // initial render is deferred to start(), which runs only after a valid login.
 
   // The knockout view swaps between the connected bracket and a stacked list at
