@@ -142,6 +142,10 @@ separate card on the Players tab). The five names and their order come from
 
 ## Notes on the data
 
+- **Standings** apply FIFA tiebreakers: points, goal difference, goals scored,
+  then **head-to-head** (a mini-league of the matches between the tied teams,
+  computed from the pulled results). Disciplinary/drawing-of-lots aren't in the
+  data, so an alphabetical fallback stands in for those last steps.
 - **Groups** are the real, official final draw (drawn 5 Dec 2025).
 - **Group fixtures** are the full round-robin (6 per group, 72 total). Real
   dates are synced from ESPN on sign-in; the seed dates are just a fallback.

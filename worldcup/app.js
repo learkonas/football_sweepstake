@@ -94,12 +94,36 @@
   }
 
   // ---- group standings ----
+  // FIFA tiebreaker for teams level on points, GD and goals: a mini-league of
+  // the matches played between just those teams (h2h points, then GD, then
+  // goals). Computed from the results we pull. Disciplinary/lots aren't in the
+  // data, so a final alphabetical fallback stands in for them.
+  function sortHeadToHead(cluster, fixtures) {
+    const names = new Set(cluster.map((r) => r.team));
+    const mini = {};
+    cluster.forEach((r) => { mini[r.team] = { pts: 0, gd: 0, gf: 0 }; });
+    fixtures.forEach((f) => {
+      if (!names.has(f.home) || !names.has(f.away)) return;
+      const H = mini[f.home], A = mini[f.away];
+      H.gf += f.homeScore; H.gd += f.homeScore - f.awayScore;
+      A.gf += f.awayScore; A.gd += f.awayScore - f.homeScore;
+      if (f.homeScore > f.awayScore) H.pts += 3;
+      else if (f.awayScore > f.homeScore) A.pts += 3;
+      else { H.pts++; A.pts++; }
+    });
+    cluster.sort((x, y) => {
+      const mx = mini[x.team], my = mini[y.team];
+      return my.pts - mx.pts || my.gd - mx.gd || my.gf - mx.gf || x.team.localeCompare(y.team);
+    });
+  }
+
   function groupStandings(g) {
     const rows = {};
     D.teams.filter((t) => t.group === g).forEach((t) => {
       rows[t.name] = { team: t.name, P: 0, W: 0, Dr: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 };
     });
-    D.groupFixtures.filter((f) => f.group === g && f.played).forEach((f) => {
+    const fixtures = D.groupFixtures.filter((f) => f.group === g && f.played);
+    fixtures.forEach((f) => {
       const h = rows[f.home], a = rows[f.away];
       h.P++; a.P++;
       h.GF += f.homeScore; h.GA += f.awayScore;
@@ -108,8 +132,19 @@
       else if (f.awayScore > f.homeScore) { a.W++; h.L++; a.Pts += 3; }
       else { h.Dr++; a.Dr++; h.Pts++; a.Pts++; }
     });
-    return Object.values(rows).map((r) => { r.GD = r.GF - r.GA; return r; })
-      .sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF || x.team.localeCompare(y.team));
+    const arr = Object.values(rows).map((r) => { r.GD = r.GF - r.GA; return r; })
+      .sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF);
+    // break ties within equal (Pts,GD,GF) clusters by head-to-head
+    const out = [];
+    for (let i = 0; i < arr.length;) {
+      let j = i + 1;
+      while (j < arr.length && arr[j].Pts === arr[i].Pts && arr[j].GD === arr[i].GD && arr[j].GF === arr[i].GF) j++;
+      const cluster = arr.slice(i, j);
+      if (cluster.length > 1) sortHeadToHead(cluster, fixtures);
+      cluster.forEach((r) => out.push(r));
+      i = j;
+    }
+    return out;
   }
 
   // ---- formatting ----
