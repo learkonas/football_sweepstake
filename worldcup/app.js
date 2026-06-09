@@ -38,22 +38,22 @@
       if (f.decided === "pens") {
         // level after 90/ET, decided on penalties: winner 2pts, loser 1pt (drew after 90)
         const winner = f.winner || (hs > as ? f.home : as > hs ? f.away : null);
-        const loser = winner === f.home ? f.away : f.home;
+        const loser = winner ? (winner === f.home ? f.away : f.home) : null;
         return {
           winner, loser, draw: false,
-          homePts: winner === f.home ? PTS.penWin : PTS.draw,
-          awayPts: winner === f.away ? PTS.penWin : PTS.draw,
-          kind: winner === f.home ? ["penWin", "penLoss"] : ["penLoss", "penWin"],
+          homePts: winner === f.home ? PTS.penWin : winner ? PTS.draw : 0,
+          awayPts: winner === f.away ? PTS.penWin : winner ? PTS.draw : 0,
+          kind: winner === f.home ? ["penWin", "penLoss"] : winner === f.away ? ["penLoss", "penWin"] : ["draw", "draw"],
         };
       }
       // decided in regulation or extra time: win = 3, loss = 0
       const winner = hs > as ? f.home : as > hs ? f.away : (f.winner || null);
-      const loser = winner === f.home ? f.away : f.home;
+      const loser = winner ? (winner === f.home ? f.away : f.home) : null;
       return {
         winner, loser, draw: false,
-        homePts: winner === f.home ? PTS.win : PTS.loss,
-        awayPts: winner === f.away ? PTS.win : PTS.loss,
-        kind: winner === f.home ? ["win", "loss"] : ["loss", "win"],
+        homePts: winner === f.home ? PTS.win : winner ? PTS.loss : 0,
+        awayPts: winner === f.away ? PTS.win : winner ? PTS.loss : 0,
+        kind: winner === f.home ? ["win", "loss"] : winner === f.away ? ["loss", "win"] : ["draw", "draw"],
       };
     }
     // group stage
@@ -93,59 +93,8 @@
     return stats;
   }
 
-  // ---- group standings ----
-  // FIFA tiebreaker for teams level on points, GD and goals: a mini-league of
-  // the matches played between just those teams (h2h points, then GD, then
-  // goals). Computed from the results we pull. Disciplinary/lots aren't in the
-  // data, so a final alphabetical fallback stands in for them.
-  function sortHeadToHead(cluster, fixtures) {
-    const names = new Set(cluster.map((r) => r.team));
-    const mini = {};
-    cluster.forEach((r) => { mini[r.team] = { pts: 0, gd: 0, gf: 0 }; });
-    fixtures.forEach((f) => {
-      if (!names.has(f.home) || !names.has(f.away)) return;
-      const H = mini[f.home], A = mini[f.away];
-      H.gf += f.homeScore; H.gd += f.homeScore - f.awayScore;
-      A.gf += f.awayScore; A.gd += f.awayScore - f.homeScore;
-      if (f.homeScore > f.awayScore) H.pts += 3;
-      else if (f.awayScore > f.homeScore) A.pts += 3;
-      else { H.pts++; A.pts++; }
-    });
-    cluster.sort((x, y) => {
-      const mx = mini[x.team], my = mini[y.team];
-      return my.pts - mx.pts || my.gd - mx.gd || my.gf - mx.gf || x.team.localeCompare(y.team);
-    });
-  }
-
-  function groupStandings(g) {
-    const rows = {};
-    D.teams.filter((t) => t.group === g).forEach((t) => {
-      rows[t.name] = { team: t.name, P: 0, W: 0, Dr: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 };
-    });
-    const fixtures = D.groupFixtures.filter((f) => f.group === g && f.played);
-    fixtures.forEach((f) => {
-      const h = rows[f.home], a = rows[f.away];
-      h.P++; a.P++;
-      h.GF += f.homeScore; h.GA += f.awayScore;
-      a.GF += f.awayScore; a.GA += f.homeScore;
-      if (f.homeScore > f.awayScore) { h.W++; a.L++; h.Pts += 3; }
-      else if (f.awayScore > f.homeScore) { a.W++; h.L++; a.Pts += 3; }
-      else { h.Dr++; a.Dr++; h.Pts++; a.Pts++; }
-    });
-    const arr = Object.values(rows).map((r) => { r.GD = r.GF - r.GA; return r; })
-      .sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF);
-    // break ties within equal (Pts,GD,GF) clusters by head-to-head
-    const out = [];
-    for (let i = 0; i < arr.length;) {
-      let j = i + 1;
-      while (j < arr.length && arr[j].Pts === arr[i].Pts && arr[j].GD === arr[i].GD && arr[j].GF === arr[i].GF) j++;
-      const cluster = arr.slice(i, j);
-      if (cluster.length > 1) sortHeadToHead(cluster, fixtures);
-      cluster.forEach((r) => out.push(r));
-      i = j;
-    }
-    return out;
-  }
+  // ---- group standings (FIFA tiebreakers incl. head-to-head) live in engine.js ----
+  const groupStandings = (g) => window.WC_ENGINE.groupStandings(D, g);
 
   // ---- formatting ----
   const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
@@ -154,6 +103,15 @@
     if (!s) return "";
     const d = new Date(s + "T00:00:00");
     return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`;
+  }
+  const fmtTime = (iso) => new Date(iso).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  // Kickoff label for a fixture: date (+ time when we have an exact timestamp).
+  function fmtKick(f) {
+    if (f.kickoff) {
+      const d = new Date(f.kickoff);
+      return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]} · ${fmtTime(f.kickoff)}`;
+    }
+    return fmtDate(f.date);
   }
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
 
@@ -169,14 +127,16 @@
   }
 
   // ---- renderers ----
+  const MEDALS = ["🥇", "🥈", "🥉"];
   function renderLeaderboard() {
     const stats = playerStats();
     const ranked = PLAYERS.slice().sort((a, b) =>
       stats[b].pts - stats[a].pts || stats[b].win - stats[a].win || stats[b].alive - stats[a].alive);
     const rows = ranked.map((p, i) => {
       const s = stats[p];
-      return `<tr class="${p === ME ? "me" : ""}">
-        <td class="rank">${i + 1}</td>
+      const rank = MEDALS[i] ? `<span class="medal">${MEDALS[i]}</span>` : i + 1;
+      return `<tr class="${p === ME ? "me" : ""} ${i === 0 ? "leader" : ""}">
+        <td class="rank">${rank}</td>
         <td><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)}</td>
         <td class="pts">${s.pts}</td>
         <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
@@ -190,7 +150,44 @@
         <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
         <th title="Teams still in the tournament">Alive</th>
       </tr></thead><tbody>${rows}</tbody></table>
-      <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>`;
+      <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>
+      ${renderMatchCentre()}`;
+  }
+
+  // Compact match row for the leaderboard's match centre. Resolves knockout
+  // teams via the projector; group teams are already known.
+  function mcRow(f, P) {
+    const ko = f.round != null;
+    const H = ko ? P.side(f, "home") : { team: f.home, proj: false };
+    const A = ko ? P.side(f, "away") : { team: f.away, proj: false };
+    const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
+    const sh = bracketSideHtml(f, H, "home", "", "bdg");
+    const sa = bracketSideHtml(f, A, "away", "", "bdg");
+    const sc = f.played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
+    const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Grp ${f.group}`;
+    const today = f.date === todayStr() ? " today" : "";
+    return `<div class="mc-row ${f.played ? "done" : ""} ${mine ? "mine" : ""}${today}">
+      <span class="mc-when">${esc(fmtKick(f))}</span>
+      <span class="mc-tag">${esc(tag)}</span>
+      <span class="mc-match">
+        <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}</span>
+        <span class="mc-sc">${sc}${sh.badge || sa.badge}</span>
+        <span class="mc-side ${sa.isWin ? "win" : ""}">${sa.label}</span>
+      </span>
+    </div>`;
+  }
+
+  function renderMatchCentre() {
+    const P = window.WC_ENGINE.projector(D);
+    const all = D.groupFixtures.concat(D.knockoutFixtures);
+    const played = all.filter((f) => f.played).sort((a, b) => whenOf(b) - whenOf(a));
+    const upcoming = all.filter((f) => !f.played && f.date).sort((a, b) => whenOf(a) - whenOf(b));
+    const results = played.slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">No results in yet — kicks off ${esc(fmtDate(D.groupFixtures[0] && D.groupFixtures[0].date))}.</p>`;
+    const next = upcoming.slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">Tournament complete 🏆</p>`;
+    return `<div class="matchcentre">
+      <section class="mc-col"><h3>Latest results</h3>${results}</section>
+      <section class="mc-col"><h3>Coming up</h3>${next}</section>
+    </div>`;
   }
 
   function renderGroups() {
@@ -224,7 +221,7 @@
       if (label) badge = `<span class="decided">${label}</span>`;
     }
     return `<div class="fx ${played ? "done" : ""}">
-      <span class="date">${fmtDate(f.date)}</span>
+      <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}</span>
       <span class="side home">${teamLabel(f.home)}</span>
       <span class="score">${score}${badge}</span>
       <span class="side away">${teamLabel(f.away)}</span>
@@ -233,51 +230,66 @@
 
   const ROUND_TITLE = { R32: "Round of 32", R16: "Round of 16", QF: "Quarter-finals", SF: "Semi-finals", "3P": "Third place", F: "Final" };
   const ROUND_SHORT = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", F: "Final" };
+  const ROUND_TAG = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", "3P": "3rd place", F: "Final" };
+
+  // Today (local) as YYYY-MM-DD, and a sortable kickoff time for any fixture.
+  const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
+  const whenOf = (f) => new Date(f.kickoff || ((f.date || "9999-12-31") + "T12:00:00")).getTime();
+
+  // One side of a tie, as HTML: team (italic if projected) or its source label,
+  // plus the score and an aet/pens badge on the winner. Shared by both layouts.
+  function bracketSideHtml(f, S, which, scoreCls, badgeCls) {
+    const score = f.played ? (which === "home" ? f.homeScore : f.awayScore) : "";
+    const isWin = f.played && S.team && (f.winner ? f.winner === S.team
+      : which === "home" ? f.homeScore > f.awayScore : f.awayScore > f.homeScore);
+    const badge = isWin && f.decided && f.decided !== "reg" ? `<sup class="${badgeCls}">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
+    const label = S.team
+      ? (S.proj ? `<span class="proj">${teamLabel(S.team)}</span>` : teamLabel(S.team))
+      : `<span class="src">${esc(S.src || "TBD")}</span>`;
+    return { label, isWin, score, badge };
+  }
+
+  const isSmallScreen = () => !!(window.matchMedia && window.matchMedia("(max-width: 720px)").matches);
 
   function renderBracket() {
+    const P = window.WC_ENGINE.projector(D);
+    return isSmallScreen() ? renderBracketList(P) : renderBracketCanvas(P);
+  }
+
+  // Mobile: a round-by-round stack of tie cards (no horizontal scroll), each
+  // showing its kickoff date + time.
+  function renderBracketList(P) {
+    const order = ["R32", "R16", "QF", "SF", "3P", "F"];
+    const sections = order.map((r) => {
+      const fx = D.knockoutFixtures.filter((f) => f.round === r);
+      if (!fx.length) return "";
+      const ties = fx.map((f) => {
+        const H = P.side(f, "home"), A = P.side(f, "away");
+        const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
+        const line = (S, which) => {
+          const s = bracketSideHtml(f, S, which, "ko-s", "bdg");
+          return `<div class="ko-line ${s.isWin ? "win" : ""}">${s.label}<span class="ko-s">${s.score}${s.badge}</span></div>`;
+        };
+        const when = fmtKick(f);
+        return `<div class="ko-tie ${f.played ? "done" : ""} ${mine ? "mine" : ""}">
+          ${line(H, "home")}${line(A, "away")}
+          ${when ? `<div class="ko-when">${esc(when)}</div>` : ""}
+        </div>`;
+      }).join("");
+      return `<section class="ko-round"><h3>${ROUND_TITLE[r]}</h3><div class="ties">${ties}</div></section>`;
+    }).join("");
+    return `<div class="ko-list">${sections}
+      ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Your teams are highlighted · italic = projected from latest results</p>` : ""}
+    </div>`;
+  }
+
+  // Desktop: connected bracket drawn top → bottom, with kickoff captions under
+  // each tie and full date + time in the hover title.
+  function renderBracketCanvas(P) {
     const byId = {};
     D.knockoutFixtures.forEach((f) => { byId[f.id] = f; });
     const rows = ["R32", "R16", "QF", "SF", "F"];
     const depth = { R32: 0, R16: 1, QF: 2, SF: 3, F: 4 };
-
-    // --- live projection: fill empty slots from group standings + feeder winners ---
-    const standCache = {};
-    const stand = (g) => standCache[g] || (standCache[g] = groupStandings(g));
-    const groups12 = "ABCDEFGHIJKL".split("");
-    const groupDone = {};
-    groups12.forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
-    const winnerOf = (f) => { if (!f || !f.played) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
-    const loserOf = (f) => { const w = winnerOf(f); return w ? (w === f.home ? f.away : f.home) : null; };
-
-    // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA Annex C table)
-    let winnerToThird = null;
-    if (groups12.every((g) => groupDone[g]) && window.WC_THIRDS) {
-      const ranked = groups12.map((g) => ({ g, r: stand(g)[2] }))
-        .sort((a, b) => b.r.Pts - a.r.Pts || b.r.GD - a.r.GD || b.r.GF - a.r.GF || a.g.localeCompare(b.g));
-      const alloc = window.WC_THIRDS.table[ranked.slice(0, 8).map((x) => x.g).sort().join("")];
-      if (alloc) { winnerToThird = {}; window.WC_THIRDS.order.split("").forEach((w, i) => { winnerToThird[w] = alloc[i]; }); }
-    }
-
-    function resolveSide(f, which) {
-      const actual = which === "home" ? f.home : f.away;
-      if (actual && actual !== "TBD") return { team: actual, proj: false };
-      const src = which === "home" ? f.srcHome : f.srcAway;
-      if (f.round === "R32") {
-        const m = /^([A-L])([12])$/.exec(src || "");
-        if (m && groupDone[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
-        if (/^3rd/.test(src || "") && winnerToThird) {
-          const other = which === "home" ? f.srcAway : f.srcHome;
-          const wm = /^([A-L])1$/.exec(other || "");
-          const tg = wm && winnerToThird[wm[1]];
-          const row = tg && stand(tg)[2];
-          if (row) return { team: row.team, proj: true, src };
-        }
-        return { team: null, src };
-      }
-      const feeder = byId[which === "home" ? f.feedHome : f.feedAway];
-      const t = f.round === "3P" ? loserOf(feeder) : winnerOf(feeder);
-      return t ? { team: t, proj: true, src } : { team: null, src };
-    }
 
     // --- geometry (top → bottom) ---
     const TIE_W = 124, TIE_H = 46, UNIT = 138, ROW_GAP = 46, PAD_L = 60, PAD_T = 6;
@@ -309,26 +321,24 @@
     });
 
     const box = (f, absolute) => {
-      const H = resolveSide(f, "home"), A = resolveSide(f, "away");
+      const H = P.side(f, "home"), A = P.side(f, "away");
       const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
       const sideHtml = (S, which) => {
-        const score = f.played ? (which === "home" ? f.homeScore : f.awayScore) : "";
-        const isWin = f.played && S.team && (f.winner ? f.winner === S.team
-          : which === "home" ? f.homeScore > f.awayScore : f.awayScore > f.homeScore);
-        const badge = isWin && f.decided && f.decided !== "reg" ? `<sup class="bdg">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
-        const label = S.team
-          ? (S.proj ? `<span class="proj">${teamLabel(S.team)}</span>` : teamLabel(S.team))
-          : `<span class="src">${esc(S.src || "TBD")}</span>`;
-        return `<div class="bxline ${isWin ? "win" : ""}">${label}<span class="bs">${score}${badge}</span></div>`;
+        const s = bracketSideHtml(f, S, which, "bs", "bdg");
+        return `<div class="bxline ${s.isWin ? "win" : ""}">${s.label}<span class="bs">${s.score}${s.badge}</span></div>`;
       };
       const pos = absolute
         ? `style="left:${cx(f.id) - TIE_W / 2}px;top:${yTop(f.round)}px;width:${TIE_W}px;height:${TIE_H}px"`
         : `style="width:${TIE_W}px"`;
-      const title = `${H.team || H.src} vs ${A.team || A.src}${f.date ? " — " + fmtDate(f.date) : ""}`;
+      const title = `${H.team || H.src} vs ${A.team || A.src}${fmtKick(f) ? " — " + fmtKick(f) : ""}`;
       return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} title="${esc(title)}">${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
     };
 
     const boxes = rows.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
+    const caps = rows.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => {
+      const when = fmtKick(f);
+      return when ? `<span class="bxcap" style="left:${cx(f.id) - TIE_W / 2}px;top:${yTop(f.round) + TIE_H + 3}px;width:${TIE_W}px">${esc(when)}</span>` : "";
+    }).join("")).join("");
     const labels = rows.map((r) => `<span class="brow" style="top:${yTop(r)}px;height:${TIE_H}px">${ROUND_SHORT[r]}</span>`).join("");
     const tp = byId["3P-1"];
 
@@ -337,8 +347,9 @@
         <svg class="blines" width="${totalW}" height="${totalH}" aria-hidden="true">${paths}</svg>
         ${labels}
         ${boxes}
+        ${caps}
       </div>
-      ${tp ? `<div class="tp"><h4>${ROUND_TITLE["3P"]}</h4>${box(tp, false)}</div>` : ""}
+      ${tp ? `<div class="tp"><h4>${ROUND_TITLE["3P"]}</h4>${box(tp, false)}${fmtKick(tp) ? `<p class="tpwhen">${esc(fmtKick(tp))}</p>` : ""}</div>` : ""}
       ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Your teams are highlighted · italic = projected from latest results</p>` : ""}
     </div>`;
   }
@@ -394,11 +405,35 @@
   function show(name) {
     current = name;
     content.innerHTML = views[name]();
-    tabs.forEach((t) => t.classList.toggle("active", t.dataset.view === name));
+    tabs.forEach((t) => {
+      const on = t.dataset.view === name;
+      t.classList.toggle("active", on);
+      t.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    content.setAttribute("aria-labelledby", "tab-" + name);
     location.hash = name;
   }
   tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.view)));
+  // Arrow-key navigation across the tablist (WAI-ARIA tabs pattern).
+  const tabList = Array.from(tabs);
+  tabList.forEach((t, i) => t.addEventListener("keydown", (e) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : e.key === "Home" ? "first" : e.key === "End" ? "last" : 0;
+    if (!d) return;
+    e.preventDefault();
+    const next = d === "first" ? tabList[0] : d === "last" ? tabList[tabList.length - 1] : tabList[(i + d + tabList.length) % tabList.length];
+    next.focus();
+    show(next.dataset.view);
+  }));
   // initial render is deferred to start(), which runs only after a valid login.
+
+  // The knockout view swaps between the connected bracket and a stacked list at
+  // the 720px breakpoint — re-render it when a resize crosses that line.
+  let bracketSmall = isSmallScreen();
+  window.addEventListener("resize", () => {
+    if (current !== "bracket") return;
+    const small = isSmallScreen();
+    if (small !== bracketSmall) { bracketSmall = small; show("bracket"); }
+  });
 
   // ---- live results ----
   const statusEl = document.getElementById("live-status");
