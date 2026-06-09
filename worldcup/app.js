@@ -208,10 +208,21 @@
     // --- live projection: fill empty slots from group standings + feeder winners ---
     const standCache = {};
     const stand = (g) => standCache[g] || (standCache[g] = groupStandings(g));
+    const groups12 = "ABCDEFGHIJKL".split("");
     const groupDone = {};
-    "ABCDEFGHIJKL".split("").forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
+    groups12.forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
     const winnerOf = (f) => { if (!f || !f.played) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
     const loserOf = (f) => { const w = winnerOf(f); return w ? (w === f.home ? f.away : f.home) : null; };
+
+    // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA Annex C table)
+    let winnerToThird = null;
+    if (groups12.every((g) => groupDone[g]) && window.WC_THIRDS) {
+      const ranked = groups12.map((g) => ({ g, r: stand(g)[2] }))
+        .sort((a, b) => b.r.Pts - a.r.Pts || b.r.GD - a.r.GD || b.r.GF - a.r.GF || a.g.localeCompare(b.g));
+      const alloc = window.WC_THIRDS.table[ranked.slice(0, 8).map((x) => x.g).sort().join("")];
+      if (alloc) { winnerToThird = {}; window.WC_THIRDS.order.split("").forEach((w, i) => { winnerToThird[w] = alloc[i]; }); }
+    }
+
     function resolveSide(f, which) {
       const actual = which === "home" ? f.home : f.away;
       if (actual && actual !== "TBD") return { team: actual, proj: false };
@@ -219,6 +230,13 @@
       if (f.round === "R32") {
         const m = /^([A-L])([12])$/.exec(src || "");
         if (m && groupDone[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
+        if (/^3rd/.test(src || "") && winnerToThird) {
+          const other = which === "home" ? f.srcAway : f.srcHome;
+          const wm = /^([A-L])1$/.exec(other || "");
+          const tg = wm && winnerToThird[wm[1]];
+          const row = tg && stand(tg)[2];
+          if (row) return { team: row.team, proj: true, src };
+        }
         return { team: null, src };
       }
       const feeder = byId[which === "home" ? f.feedHome : f.feedAway];

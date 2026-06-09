@@ -18,6 +18,7 @@ you're in, results load automatically; you can also edit `data.js` by hand.
 | `styles.css` | All styling |
 | `app.js` | Sign-in, scoring, standings + rendering (you shouldn't need to touch this) |
 | `live.js` | Fetches & merges results from ESPN's public API |
+| `thirds.js` | FIFA Annex C lookup (which 3rd-placed teams go where) |
 | `data.js` | Teams, players, fixtures, results + config — hand-editable |
 
 ## Automatic results
@@ -89,9 +90,12 @@ Round-of-32 ties across the top flowing down round by round to the final, with
 connector lines showing the route. Slots fill in **automatically from the latest
 results**: once a group finishes, its winner/runner-up drop into the matching
 R32 slots, and each tie's winner propagates down to the next round (projected
-teams show in italics until ESPN confirms them officially). Until a slot's team
-is known it shows where it comes from (e.g. `A2`, `B2`, `3rd A/B/C/D/F`,
-`Winner R32-1`). Ties involving the signed-in player's teams are highlighted.
+teams show in italics until ESPN confirms them officially). When all 12 groups
+finish, the **8 best third-placed teams** are ranked and slotted into the right
+R32 matchups via FIFA's official Annex C table (`thirds.js`, all 495
+combinations). Until a slot's team is known it shows where it comes from
+(e.g. `A2`, `B2`, `3rd A/B/C/D/F`, `Winner R32-1`). Ties involving the signed-in
+player's teams are highlighted.
 
 Knockout fixtures have stable ids by bracket position (`R32-1` … `R32-16`,
 `R16-1` … `R16-8`, `QF-1` … `QF-4`, `SF-1`, `SF-2`, `3P-1`, `F-1`) plus the
