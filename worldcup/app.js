@@ -1,0 +1,253 @@
+/* World Cup 2026 Sweepstake tracker — all rendering & scoring logic.
+   No build step, no framework. Reads window.WC_DATA from data.js. */
+(function () {
+  "use strict";
+
+  const D = window.WC_DATA;
+  if (!D) { document.body.innerHTML = "<p style='padding:2rem'>data.js failed to load.</p>"; return; }
+
+  const PTS = D.config.points;
+  const PLAYERS = D.config.playerOrder;
+  const PLAYER_COLORS = ["#e63946", "#2a9d8f", "#e9a020", "#5b6cf0", "#9b5de5"];
+  const colorFor = (p) => PLAYER_COLORS[PLAYERS.indexOf(p) % PLAYER_COLORS.length];
+
+  // ---- lookups ----
+  const teamGroup = {};
+  D.teams.forEach((t) => { teamGroup[t.name] = t.group; });
+
+  const ownerOf = {};
+  Object.keys(D.players).forEach((p) => D.players[p].forEach((t) => { ownerOf[t] = p; }));
+
+  const allFixtures = D.groupFixtures.concat(D.knockoutFixtures);
+
+  // A team is eliminated if manually flagged OR it lost a played knockout match.
+  const eliminated = new Set(D.config.eliminatedTeams || []);
+  D.knockoutFixtures.forEach((f) => {
+    if (!f.played) return;
+    const r = matchResult(f, true);
+    if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
+  });
+  const isEliminated = (t) => eliminated.has(t);
+
+  // ---- scoring ----
+  // Returns { winner, loser, draw, homePts, awayPts } for a played fixture.
+  function matchResult(f, knockout) {
+    const hs = f.homeScore, as = f.awayScore;
+    if (knockout) {
+      if (f.decided === "pens") {
+        // level after 90/ET, decided on penalties: winner 2pts, loser 1pt (drew after 90)
+        const winner = f.winner || (hs > as ? f.home : as > hs ? f.away : null);
+        const loser = winner === f.home ? f.away : f.home;
+        return {
+          winner, loser, draw: false,
+          homePts: winner === f.home ? PTS.penWin : PTS.draw,
+          awayPts: winner === f.away ? PTS.penWin : PTS.draw,
+          kind: winner === f.home ? ["penWin", "penLoss"] : ["penLoss", "penWin"],
+        };
+      }
+      // decided in regulation or extra time: win = 3, loss = 0
+      const winner = hs > as ? f.home : as > hs ? f.away : (f.winner || null);
+      const loser = winner === f.home ? f.away : f.home;
+      return {
+        winner, loser, draw: false,
+        homePts: winner === f.home ? PTS.win : PTS.loss,
+        awayPts: winner === f.away ? PTS.win : PTS.loss,
+        kind: winner === f.home ? ["win", "loss"] : ["loss", "win"],
+      };
+    }
+    // group stage
+    if (hs > as) return { winner: f.home, loser: f.away, draw: false, homePts: PTS.win, awayPts: PTS.loss, kind: ["win", "loss"] };
+    if (as > hs) return { winner: f.away, loser: f.home, draw: false, homePts: PTS.loss, awayPts: PTS.win, kind: ["loss", "win"] };
+    return { winner: null, loser: null, draw: true, homePts: PTS.draw, awayPts: PTS.draw, kind: ["draw", "draw"] };
+  }
+
+  // ---- player stats ----
+  function playerStats() {
+    const stats = {};
+    PLAYERS.forEach((p) => {
+      stats[p] = { pts: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0, alive: 0, teamPts: {} };
+      D.players[p].forEach((t) => { stats[p].teamPts[t] = 0; if (!isEliminated(t)) stats[p].alive++; });
+    });
+
+    function award(team, pts, kind) {
+      const p = ownerOf[team];
+      if (!p) return;
+      stats[p].pts += pts;
+      stats[p].teamPts[team] += pts;
+      stats[p][kind]++;
+    }
+
+    D.groupFixtures.forEach((f) => {
+      if (!f.played) return;
+      const r = matchResult(f, false);
+      award(f.home, r.homePts, r.kind[0]);
+      award(f.away, r.awayPts, r.kind[1]);
+    });
+    D.knockoutFixtures.forEach((f) => {
+      if (!f.played || f.home === "TBD" || f.away === "TBD") return;
+      const r = matchResult(f, true);
+      award(f.home, r.homePts, r.kind[0]);
+      award(f.away, r.awayPts, r.kind[1]);
+    });
+    return stats;
+  }
+
+  // ---- group standings ----
+  function groupStandings(g) {
+    const rows = {};
+    D.teams.filter((t) => t.group === g).forEach((t) => {
+      rows[t.name] = { team: t.name, P: 0, W: 0, Dr: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 };
+    });
+    D.groupFixtures.filter((f) => f.group === g && f.played).forEach((f) => {
+      const h = rows[f.home], a = rows[f.away];
+      h.P++; a.P++;
+      h.GF += f.homeScore; h.GA += f.awayScore;
+      a.GF += f.awayScore; a.GA += f.homeScore;
+      if (f.homeScore > f.awayScore) { h.W++; a.L++; h.Pts += 3; }
+      else if (f.awayScore > f.homeScore) { a.W++; h.L++; a.Pts += 3; }
+      else { h.Dr++; a.Dr++; h.Pts++; a.Pts++; }
+    });
+    return Object.values(rows).map((r) => { r.GD = r.GF - r.GA; return r; })
+      .sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF || x.team.localeCompare(y.team));
+  }
+
+  // ---- formatting ----
+  const DOW = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  function fmtDate(s) {
+    if (!s) return "";
+    const d = new Date(s + "T00:00:00");
+    return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`;
+  }
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+
+  function ownerTag(team) {
+    const p = ownerOf[team];
+    if (!p) return "";
+    return `<span class="owner" style="background:${colorFor(p)}" title="${esc(p)}">${esc(p[0])}</span>`;
+  }
+  function teamLabel(team) {
+    if (!team || team === "TBD") return `<span class="team tbd">${esc(team || "TBD")}</span>`;
+    const cls = isEliminated(team) ? "team out" : "team";
+    return `<span class="${cls}">${ownerTag(team)}${esc(team)}</span>`;
+  }
+
+  // ---- renderers ----
+  function renderLeaderboard() {
+    const stats = playerStats();
+    const ranked = PLAYERS.slice().sort((a, b) =>
+      stats[b].pts - stats[a].pts || stats[b].win - stats[a].win || stats[b].alive - stats[a].alive);
+    const rows = ranked.map((p, i) => {
+      const s = stats[p];
+      return `<tr>
+        <td class="rank">${i + 1}</td>
+        <td><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)}</td>
+        <td class="pts">${s.pts}</td>
+        <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
+        <td>${s.alive}/${D.players[p].length}</td>
+      </tr>`;
+    }).join("");
+    return `<table class="board">
+      <thead><tr>
+        <th>#</th><th>Player</th><th>Pts</th>
+        <th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th>
+        <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
+        <th title="Teams still in the tournament">Alive</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>`;
+  }
+
+  function renderGroups() {
+    return `<div class="grid">` + Object.keys(WC_GROUPS()).map((g) => {
+      const standings = groupStandings(g);
+      const srows = standings.map((r, i) => `<tr class="${i < 2 ? "qual" : i === 2 ? "third" : ""}">
+        <td class="tname">${teamLabel(r.team)}</td>
+        <td>${r.P}</td><td>${r.W}</td><td>${r.Dr}</td><td>${r.L}</td>
+        <td>${r.GF}</td><td>${r.GA}</td><td>${r.GD > 0 ? "+" + r.GD : r.GD}</td><td class="pts">${r.Pts}</td>
+      </tr>`).join("");
+      const fixtures = D.groupFixtures.filter((f) => f.group === g)
+        .sort((a, b) => a.matchday - b.matchday || a.date.localeCompare(b.date))
+        .map((f) => fixtureRow(f, false)).join("");
+      return `<section class="card">
+        <h3>Group ${g}</h3>
+        <table class="standings">
+          <thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
+          <tbody>${srows}</tbody>
+        </table>
+        <div class="fixtures">${fixtures}</div>
+      </section>`;
+    }).join("") + `</div>`;
+  }
+
+  function fixtureRow(f, knockout) {
+    const played = f.played;
+    const score = played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
+    let badge = "";
+    if (knockout && played && f.decided) {
+      const label = f.decided === "pens" ? "pens" : f.decided === "et" ? "AET" : "";
+      if (label) badge = `<span class="decided">${label}</span>`;
+    }
+    return `<div class="fx ${played ? "done" : ""}">
+      <span class="date">${fmtDate(f.date)}</span>
+      <span class="side home">${teamLabel(f.home)}</span>
+      <span class="score">${score}${badge}</span>
+      <span class="side away">${teamLabel(f.away)}</span>
+    </div>`;
+  }
+
+  function renderBracket() {
+    const order = [["R32", "Round of 32"], ["R16", "Round of 16"], ["QF", "Quarter-finals"], ["SF", "Semi-finals"], ["3P", "Third place"], ["F", "Final"]];
+    return `<div class="bracket">` + order.map(([r, title]) => {
+      const ties = D.knockoutFixtures.filter((f) => f.round === r).map((f) => `
+        <div class="tie ${f.played ? "done" : ""}">
+          <div class="tieline">${teamLabel(f.home)}<span class="ts">${f.played ? f.homeScore : ""}</span></div>
+          <div class="tieline">${teamLabel(f.away)}<span class="ts">${f.played ? f.awayScore : ""}</span></div>
+          <div class="tiefoot">${fmtDate(f.date)}${f.played && f.decided && f.decided !== "reg" ? ` &middot; ${f.decided === "pens" ? "pens" : "AET"}` : ""}</div>
+        </div>`).join("");
+      return `<div class="round"><h3>${title}</h3>${ties}</div>`;
+    }).join("") + `</div>`;
+  }
+
+  function renderPlayers() {
+    const stats = playerStats();
+    return `<div class="grid">` + PLAYERS.map((p) => {
+      const s = stats[p];
+      const teams = D.players[p].slice().sort((a, b) => s.teamPts[b] - s.teamPts[a])
+        .map((t) => `<li class="${isEliminated(t) ? "out" : ""}">
+          <span>${teamLabel(t)} <small class="grp">${teamGroup[t] || ""}</small></span>
+          <b>${s.teamPts[t]} pt${s.teamPts[t] === 1 ? "" : "s"}</b>
+        </li>`).join("");
+      return `<section class="card player">
+        <h3><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)} <span class="ptotal">${s.pts} pts</span></h3>
+        <p class="sub">${s.alive}/${D.players[p].length} teams still alive</p>
+        <ul class="teamlist">${teams}</ul>
+      </section>`;
+    }).join("") + (D.config.unallocated && D.config.unallocated.length
+      ? `<section class="card"><h3>Unallocated</h3><p class="sub">Not drawn by any player</p><ul class="teamlist">${
+          D.config.unallocated.map((t) => `<li><span>${teamLabel(t)} <small class="grp">${teamGroup[t] || ""}</small></span></li>`).join("")}</ul></section>`
+      : "") + `</div>`;
+  }
+
+  function WC_GROUPS() {
+    const g = {};
+    D.teams.forEach((t) => { (g[t.group] = g[t.group] || []).push(t.name); });
+    return g;
+  }
+
+  // ---- tabs ----
+  const views = {
+    leaderboard: renderLeaderboard,
+    groups: renderGroups,
+    bracket: renderBracket,
+    players: renderPlayers,
+  };
+  const content = document.getElementById("content");
+  const tabs = document.querySelectorAll(".tab");
+  function show(name) {
+    content.innerHTML = views[name]();
+    tabs.forEach((t) => t.classList.toggle("active", t.dataset.view === name));
+    location.hash = name;
+  }
+  tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.view)));
+  show(views[location.hash.slice(1)] ? location.hash.slice(1) : "leaderboard");
+})();
