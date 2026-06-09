@@ -243,11 +243,50 @@
   };
   const content = document.getElementById("content");
   const tabs = document.querySelectorAll(".tab");
+  let current = "leaderboard";
+
+  // The eliminated set + ownerOf are computed once at load; recompute on refresh.
+  function recompute() {
+    eliminated.clear();
+    (D.config.eliminatedTeams || []).forEach((t) => eliminated.add(t));
+    D.knockoutFixtures.forEach((f) => {
+      if (!f.played) return;
+      const r = matchResult(f, true);
+      if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
+    });
+  }
+
   function show(name) {
+    current = name;
     content.innerHTML = views[name]();
     tabs.forEach((t) => t.classList.toggle("active", t.dataset.view === name));
     location.hash = name;
   }
   tabs.forEach((t) => t.addEventListener("click", () => show(t.dataset.view)));
   show(views[location.hash.slice(1)] ? location.hash.slice(1) : "leaderboard");
+
+  // ---- live results ----
+  const statusEl = document.getElementById("live-status");
+  const refreshBtn = document.getElementById("live-refresh");
+  function setStatus(text, cls) { if (statusEl) { statusEl.textContent = text; statusEl.className = "live-status " + (cls || ""); } }
+
+  async function refreshLive(manual) {
+    if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) { setStatus("Showing saved results — edit data.js to update", "muted"); if (refreshBtn) refreshBtn.style.display = "none"; return; }
+    setStatus("Fetching latest results…", "loading");
+    const r = await window.WC_LIVE.fetchAndMerge(D);
+    if (r.ok) {
+      recompute();
+      show(current);
+      const t = r.time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+      setStatus(`Live · ${r.finished} results in · updated ${t}`, "ok");
+    } else if (r.skipped) {
+      setStatus("Manual mode — edit data.js", "muted");
+    } else {
+      setStatus("Offline — showing saved data" + (manual ? " (retry failed)" : ""), "warn");
+    }
+  }
+  if (refreshBtn) refreshBtn.addEventListener("click", () => refreshLive(true));
+  refreshLive(false);
+  // auto-refresh every 2 minutes while the page is open
+  if (window.WC_LIVE && window.WC_LIVE.enabled(D)) setInterval(() => refreshLive(false), 120000);
 })();

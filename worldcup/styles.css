@@ -36,7 +36,18 @@ h1 span { color: var(--accent); }
 .tab:hover { color: var(--text); }
 .tab.active { background: var(--panel2); color: var(--text); border-color: var(--accent); }
 
-main { max-width: 1100px; margin: 0 auto; padding: 1.4rem 1rem 3rem; }
+.livebar { max-width: 1100px; margin: 0 auto; padding: 0.6rem 1rem 0; display: flex; align-items: center; gap: 0.6rem; justify-content: flex-end; }
+.live-status { font-size: 0.8rem; color: var(--muted); }
+.live-status::before { content: "●"; margin-right: 0.4rem; }
+.live-status.ok { color: var(--accent); }
+.live-status.ok::before { color: var(--accent); }
+.live-status.loading::before { color: var(--gold); }
+.live-status.warn { color: var(--gold); }
+.live-status.muted::before { color: var(--muted); }
+.live-refresh { background: var(--panel2); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 0.3rem 0.7rem; font-size: 0.8rem; cursor: pointer; }
+.live-refresh:hover { border-color: var(--accent); }
+
+main { max-width: 1100px; margin: 0 auto; padding: 0.8rem 1rem 3rem; }
 
 /* leaderboard */
 table.board { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 10px; overflow: hidden; }

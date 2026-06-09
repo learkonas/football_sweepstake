@@ -1,0 +1,38 @@
+name: Update World Cup results
+
+# Bakes the latest scores into worldcup/data.js so a deployed site serves
+# fresh, static data without every visitor hitting the results API.
+on:
+  schedule:
+    - cron: "*/15 * * * *"   # every 15 min (GitHub may delay; min interval 5 min)
+  workflow_dispatch: {}        # also run on demand from the Actions tab
+
+permissions:
+  contents: write
+
+concurrency:
+  group: wc-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Fetch and bake results
+        run: node update.js
+        working-directory: worldcup
+      - name: Commit if changed
+        run: |
+          if [ -n "$(git status --porcelain worldcup/data.js)" ]; then
+            git config user.name "wc-results-bot"
+            git config user.email "actions@github.com"
+            git add worldcup/data.js
+            git commit -m "Update World Cup results [skip ci]"
+            git push
+          else
+            echo "No changes."
+          fi

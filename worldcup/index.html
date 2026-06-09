@@ -18,13 +18,19 @@
     </nav>
   </header>
 
+  <div class="livebar">
+    <span id="live-status" class="live-status">&hellip;</span>
+    <button id="live-refresh" class="live-refresh" title="Fetch latest results">Refresh</button>
+  </div>
+
   <main id="content"></main>
 
   <footer>
-    <p>Update results by editing <code>data.js</code>, then refresh. See <code>README.md</code>.</p>
+    <p>Results update automatically from TheSportsDB. You can also edit <code>data.js</code> by hand &mdash; see <code>README.md</code>.</p>
   </footer>
 
   <script src="data.js"></script>
+  <script src="live.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

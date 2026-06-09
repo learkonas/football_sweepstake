@@ -1,5 +1,7 @@
 // World Cup 2026 Sweepstake — data file.
 // Edit results here, then refresh the page. See README.md for the schema.
+// Auto-updated by update.js. Add "lock": true to a fixture to protect a
+// manual edit from being overwritten by live data.
 window.WC_DATA = {
   "config": {
     "points": {
@@ -17,15 +19,54 @@ window.WC_DATA = {
     ],
     "eliminatedTeams": [],
     "unallocated": [
-      "Portugal",
-      "DR Congo",
-      "Uzbekistan",
-      "Colombia",
-      "England",
       "Croatia",
       "Ghana",
       "Panama"
-    ]
+    ],
+    "live": {
+      "enabled": true,
+      "league": "4429",
+      "season": "2026",
+      "key": "3",
+      "aliases": {
+        "Czech Republic": "Czechia",
+        "USA": "United States",
+        "Bosnia-Herzegovina": "Bosnia and Herzegovina",
+        "Curaçao": "Curacao",
+        "Korea Republic": "South Korea",
+        "IR Iran": "Iran",
+        "Türkiye": "Turkey",
+        "Cape Verde Islands": "Cape Verde",
+        "Côte d'Ivoire": "Ivory Coast",
+        "Congo DR": "DR Congo"
+      },
+      "knockoutWindows": {
+        "R32": [
+          "2026-06-28",
+          "2026-07-03"
+        ],
+        "R16": [
+          "2026-07-04",
+          "2026-07-07"
+        ],
+        "QF": [
+          "2026-07-09",
+          "2026-07-11"
+        ],
+        "SF": [
+          "2026-07-14",
+          "2026-07-15"
+        ],
+        "3P": [
+          "2026-07-18",
+          "2026-07-18"
+        ],
+        "F": [
+          "2026-07-19",
+          "2026-07-19"
+        ]
+      }
+    }
   },
   "teams": [
     {
@@ -230,7 +271,8 @@ window.WC_DATA = {
       "Netherlands",
       "Egypt",
       "Saudi Arabia",
-      "Norway"
+      "Norway",
+      "Portugal"
     ],
     "Cones": [
       "South Africa",
@@ -240,7 +282,8 @@ window.WC_DATA = {
       "Japan",
       "Iran",
       "Uruguay",
-      "Argentina"
+      "Argentina",
+      "DR Congo"
     ],
     "Alex": [
       "South Korea",
@@ -250,7 +293,8 @@ window.WC_DATA = {
       "Sweden",
       "New Zealand",
       "France",
-      "Algeria"
+      "Algeria",
+      "Uzbekistan"
     ],
     "Bilal": [
       "Czechia",
@@ -260,7 +304,8 @@ window.WC_DATA = {
       "Tunisia",
       "Spain",
       "Senegal",
-      "Austria"
+      "Austria",
+      "Colombia"
     ],
     "Leo": [
       "Canada",
@@ -270,7 +315,8 @@ window.WC_DATA = {
       "Belgium",
       "Cape Verde",
       "Iraq",
-      "Jordan"
+      "Jordan",
+      "England"
     ]
   },
   "groupFixtures": [
@@ -292,7 +338,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "South Korea",
       "away": "Czechia",
-      "date": "2026-06-11",
+      "date": "2026-06-12",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -364,7 +410,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Qatar",
       "away": "Switzerland",
-      "date": "2026-06-11",
+      "date": "2026-06-13",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -496,7 +542,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "United States",
       "away": "Paraguay",
-      "date": "2026-06-12",
+      "date": "2026-06-13",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -508,7 +554,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Australia",
       "away": "Turkey",
-      "date": "2026-06-12",
+      "date": "2026-06-14",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -568,7 +614,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Germany",
       "away": "Curacao",
-      "date": "2026-06-13",
+      "date": "2026-06-14",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -580,7 +626,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Ivory Coast",
       "away": "Ecuador",
-      "date": "2026-06-13",
+      "date": "2026-06-14",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -652,7 +698,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Sweden",
       "away": "Tunisia",
-      "date": "2026-06-13",
+      "date": "2026-06-15",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -712,7 +758,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Belgium",
       "away": "Egypt",
-      "date": "2026-06-14",
+      "date": "2026-06-15",
       "city": "",
       "homeScore": null,
       "awayScore": null,
@@ -784,7 +830,7 @@ window.WC_DATA = {
       "matchday": 1,
       "home": "Spain",
       "away": "Cape Verde",
-      "date": "2026-06-14",
+      "date": "2026-06-15",
       "city": "",
       "homeScore": null,
       "awayScore": null,
