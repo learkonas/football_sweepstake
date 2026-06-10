@@ -152,6 +152,10 @@ separate card on the Players tab). The five names and their order come from
   computed from the pulled results). Disciplinary/drawing-of-lots aren't in the
   data, so an alphabetical fallback stands in for those last steps.
 - **Groups** are the real, official final draw (drawn 5 Dec 2025).
+- **FIFA rankings** (`teams[].rank`) are the official world ranking from the
+  1 Apr 2026 update. They're shown next to each team on the Players tab, and
+  each player's **average FIFA rank** is shown beneath their name. Edit the
+  `rank` field on any team in `data.js` to refresh after a new ranking release.
 - **Group fixtures** are the full round-robin (6 per group, 72 total). Real
   dates are synced from ESPN on sign-in; the seed dates are just a fallback.
 - **Knockout fixtures** are structural placeholders (16 R32 + 8 R16 + 4 QF +

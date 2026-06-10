@@ -32,195 +32,243 @@ window.WC_DATA = {
   "teams": [
     {
       "name": "Mexico",
-      "group": "A"
+      "group": "A",
+      "rank": 15
     },
     {
       "name": "South Africa",
-      "group": "A"
+      "group": "A",
+      "rank": 60
     },
     {
       "name": "South Korea",
-      "group": "A"
+      "group": "A",
+      "rank": 25
     },
     {
       "name": "Czechia",
-      "group": "A"
+      "group": "A",
+      "rank": 41
     },
     {
       "name": "Canada",
-      "group": "B"
+      "group": "B",
+      "rank": 30
     },
     {
       "name": "Bosnia and Herzegovina",
-      "group": "B"
+      "group": "B",
+      "rank": 65
     },
     {
       "name": "Qatar",
-      "group": "B"
+      "group": "B",
+      "rank": 55
     },
     {
       "name": "Switzerland",
-      "group": "B"
+      "group": "B",
+      "rank": 19
     },
     {
       "name": "Brazil",
-      "group": "C"
+      "group": "C",
+      "rank": 6
     },
     {
       "name": "Morocco",
-      "group": "C"
+      "group": "C",
+      "rank": 8
     },
     {
       "name": "Haiti",
-      "group": "C"
+      "group": "C",
+      "rank": 83
     },
     {
       "name": "Scotland",
-      "group": "C"
+      "group": "C",
+      "rank": 43
     },
     {
       "name": "United States",
-      "group": "D"
+      "group": "D",
+      "rank": 16
     },
     {
       "name": "Paraguay",
-      "group": "D"
+      "group": "D",
+      "rank": 40
     },
     {
       "name": "Australia",
-      "group": "D"
+      "group": "D",
+      "rank": 27
     },
     {
       "name": "Turkey",
-      "group": "D"
+      "group": "D",
+      "rank": 22
     },
     {
       "name": "Germany",
-      "group": "E"
+      "group": "E",
+      "rank": 10
     },
     {
       "name": "Curacao",
-      "group": "E"
+      "group": "E",
+      "rank": 82
     },
     {
       "name": "Ivory Coast",
-      "group": "E"
+      "group": "E",
+      "rank": 34
     },
     {
       "name": "Ecuador",
-      "group": "E"
+      "group": "E",
+      "rank": 23
     },
     {
       "name": "Netherlands",
-      "group": "F"
+      "group": "F",
+      "rank": 7
     },
     {
       "name": "Japan",
-      "group": "F"
+      "group": "F",
+      "rank": 18
     },
     {
       "name": "Sweden",
-      "group": "F"
+      "group": "F",
+      "rank": 38
     },
     {
       "name": "Tunisia",
-      "group": "F"
+      "group": "F",
+      "rank": 44
     },
     {
       "name": "Belgium",
-      "group": "G"
+      "group": "G",
+      "rank": 9
     },
     {
       "name": "Egypt",
-      "group": "G"
+      "group": "G",
+      "rank": 29
     },
     {
       "name": "Iran",
-      "group": "G"
+      "group": "G",
+      "rank": 21
     },
     {
       "name": "New Zealand",
-      "group": "G"
+      "group": "G",
+      "rank": 85
     },
     {
       "name": "Spain",
-      "group": "H"
+      "group": "H",
+      "rank": 2
     },
     {
       "name": "Cape Verde",
-      "group": "H"
+      "group": "H",
+      "rank": 69
     },
     {
       "name": "Saudi Arabia",
-      "group": "H"
+      "group": "H",
+      "rank": 61
     },
     {
       "name": "Uruguay",
-      "group": "H"
+      "group": "H",
+      "rank": 17
     },
     {
       "name": "France",
-      "group": "I"
+      "group": "I",
+      "rank": 1
     },
     {
       "name": "Senegal",
-      "group": "I"
+      "group": "I",
+      "rank": 14
     },
     {
       "name": "Iraq",
-      "group": "I"
+      "group": "I",
+      "rank": 57
     },
     {
       "name": "Norway",
-      "group": "I"
+      "group": "I",
+      "rank": 31
     },
     {
       "name": "Argentina",
-      "group": "J"
+      "group": "J",
+      "rank": 3
     },
     {
       "name": "Algeria",
-      "group": "J"
+      "group": "J",
+      "rank": 28
     },
     {
       "name": "Austria",
-      "group": "J"
+      "group": "J",
+      "rank": 24
     },
     {
       "name": "Jordan",
-      "group": "J"
+      "group": "J",
+      "rank": 63
     },
     {
       "name": "Portugal",
-      "group": "K"
+      "group": "K",
+      "rank": 5
     },
     {
       "name": "DR Congo",
-      "group": "K"
+      "group": "K",
+      "rank": 46
     },
     {
       "name": "Uzbekistan",
-      "group": "K"
+      "group": "K",
+      "rank": 50
     },
     {
       "name": "Colombia",
-      "group": "K"
+      "group": "K",
+      "rank": 13
     },
     {
       "name": "England",
-      "group": "L"
+      "group": "L",
+      "rank": 4
     },
     {
       "name": "Croatia",
-      "group": "L"
+      "group": "L",
+      "rank": 11
     },
     {
       "name": "Ghana",
-      "group": "L"
+      "group": "L",
+      "rank": 74
     },
     {
       "name": "Panama",
-      "group": "L"
+      "group": "L",
+      "rank": 33
     }
   ],
   "players": {
