@@ -164,7 +164,7 @@
     const sh = bracketSideHtml(f, H, "home", "", "bdg");
     const sa = bracketSideHtml(f, A, "away", "", "bdg");
     const sc = f.played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
-    const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Grp ${f.group}`;
+    const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Group ${f.group}`;
     const today = f.date === todayStr() ? " today" : "";
     return `<div class="mc-row ${f.played ? "done" : ""} ${mine ? "mine" : ""}${today}">
       <span class="mc-when">${esc(fmtKick(f))}</span>
@@ -494,8 +494,8 @@
     start();
     requestAnimationFrame(() => { if (site) site.classList.add("reveal"); });
     // let the clouds open a touch before the confetti bursts through
-    if (!reduceMotion) setTimeout(fireConfetti, 220);
-    setTimeout(() => { if (gate) gate.style.display = "none"; }, 1000);
+    if (!reduceMotion) setTimeout(fireConfetti, 180);
+    setTimeout(() => { if (gate) gate.style.display = "none"; }, 550);
   }
 
   const gateForm = document.getElementById("gate-form");
