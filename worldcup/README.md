@@ -5,9 +5,13 @@ between **Dazzo, Cones, Alex, Bilal, and Leo**. No build step, no server.
 
 ## Run it
 
-Visit the site and enter your name (Dazzo / Cones / Alex / Bilal / Leo) at the
-sign-in screen. Once you're in, results load automatically. The site is deployed
-on Vercel from the `main` branch — any push to `main` deploys immediately.
+The site is deployed on Vercel — visit the live URL and enter your name
+(Dazzo / Cones / Alex / Bilal / Leo) at the sign-in screen. Once you're in,
+results load automatically.
+
+To run locally, open `worldcup/index.html` directly in a browser. Everything
+works offline except the ESPN results fetch, which falls back silently to the
+seed data in `data.js`.
 
 ## Files
 
