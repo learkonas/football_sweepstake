@@ -138,7 +138,7 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
   -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 1.6rem, #000 calc(100% - 1.6rem), transparent 100%);
           mask-image: linear-gradient(90deg, transparent 0, #000 1.6rem, #000 calc(100% - 1.6rem), transparent 100%);
 }
-.hscroll > .card { flex: 0 0 380px; scroll-snap-align: start; }
+.hscroll > .card { flex: 0 0 440px; scroll-snap-align: start; }
 .hscroll::-webkit-scrollbar { height: 8px; }
 .hscroll::-webkit-scrollbar-thumb { background: var(--line); border-radius: 999px; }
 .hscroll::-webkit-scrollbar-thumb:hover { background: var(--muted); }
@@ -385,7 +385,7 @@ table.board tr.me td:nth-child(2)::after { content: " you"; color: var(--accent)
   }
   .tabs::-webkit-scrollbar { display: none; }
   .tab { flex: 1 0 auto; padding: 0.5rem 0.9rem; }
-  .hscroll > .card { flex-basis: 84vw; max-width: 360px; }
+  .hscroll > .card { flex-basis: 90vw; max-width: 420px; }
   /* group navigation arrows are mobile-only */
   .gnav { display: inline-flex; }
 }
