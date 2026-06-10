@@ -114,16 +114,16 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
 /* group stage scroller + its mobile navigation arrows */
 .groups-wrap { position: relative; }
 .gnav {
-  display: none; position: absolute; top: 50%; transform: translateY(-50%);
-  z-index: 5; width: 38px; height: 38px; border-radius: 50%;
+  display: none; position: fixed; bottom: 1rem;
+  z-index: 50; width: 44px; height: 44px; border-radius: 50%;
   align-items: center; justify-content: center;
   background: var(--panel); border: 1px solid var(--line); color: var(--accent);
-  font-size: 1.4rem; line-height: 1; cursor: pointer;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.14);
+  font-size: 1.5rem; line-height: 1; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
   transition: opacity .15s ease, border-color .15s ease;
 }
-.gnav.prev { left: 0; }
-.gnav.next { right: 0; }
+.gnav.prev { right: 4.2rem; }
+.gnav.next { right: 1rem; }
 .gnav:disabled { opacity: 0.3; cursor: default; }
 .gnav:not(:disabled):hover { border-color: var(--accent); }
 
