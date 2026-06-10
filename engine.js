@@ -62,7 +62,14 @@
   // third-placed allocation are computed once; feeder winners are read live from
   // the fixtures each call, so projecting later rounds reflects results applied
   // during the same merge pass.
-  function projector(D) {
+  //
+  // opts.settledOnly: only resolve a slot once its source is actually settled
+  // (group fully played). The live resolver passes this so it never *locks* a
+  // not-yet-qualified team into f.home/f.away off partial standings. The display
+  // (app.js) leaves it off, so the bracket can show a live projected guess —
+  // flagged proj:true (rendered in italics) — from the latest standings.
+  function projector(D, opts) {
+    const settledOnly = !!(opts && opts.settledOnly);
     const byId = {};
     D.knockoutFixtures.forEach((f) => { byId[f.id] = f; });
     const standCache = {};
@@ -74,13 +81,21 @@
       groupDone[g] = gf.every((f) => f.played);
       groupStarted[g] = gf.some((f) => f.played);
     });
+    // A group slot can be projected once it has kicked off (display) or only once
+    // settled (live lock).
+    const groupReady = settledOnly ? groupDone : groupStarted;
 
-    // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA Annex C)
+    // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA
+    // Annex C). Settled when every group is done; for display we also make a
+    // provisional guess from current standings once every group has kicked off.
     let winnerToThird = null;
-    if (groups12.every((g) => groupDone[g]) && window.WC_THIRDS) {
-      const ranked = groups12.map((g) => ({ g, r: stand(g)[2] }))
+    const thirdsReady = settledOnly
+      ? groups12.every((g) => groupDone[g])
+      : groups12.every((g) => groupStarted[g]);
+    if (thirdsReady && window.WC_THIRDS) {
+      const ranked = groups12.map((g) => ({ g, r: stand(g)[2] })).filter((x) => x.r)
         .sort((a, b) => b.r.Pts - a.r.Pts || b.r.GD - a.r.GD || b.r.GF - a.r.GF || a.g.localeCompare(b.g));
-      const alloc = window.WC_THIRDS.table[ranked.slice(0, 8).map((x) => x.g).sort().join("")];
+      const alloc = ranked.length >= 8 && window.WC_THIRDS.table[ranked.slice(0, 8).map((x) => x.g).sort().join("")];
       if (alloc) { winnerToThird = {}; window.WC_THIRDS.order.split("").forEach((w, i) => { winnerToThird[w] = alloc[i]; }); }
     }
 
@@ -95,9 +110,7 @@
       const src = which === "home" ? f.srcHome : f.srcAway;
       if (f.round === "R32") {
         const m = /^([A-L])([12])$/.exec(src || "");
-        // Project the winner/runner-up from the latest standings as soon as the
-        // group has kicked off — not only once every group game is played.
-        if (m && groupStarted[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
+        if (m && groupReady[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
         if (/^3rd/.test(src || "") && winnerToThird) {
           const other = which === "home" ? f.srcAway : f.srcHome;
           const wm = /^([A-L])1$/.exec(other || "");

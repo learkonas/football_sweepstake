@@ -251,21 +251,26 @@
         .map((c) => Math.round(c.getBoundingClientRect().left - base));
     };
     // Each card's left edge is also its scroll-snap point, so navigating to one
-    // cooperates with CSS scroll-snap instead of fighting it.
+    // cooperates with CSS scroll-snap instead of fighting it. Work in card
+    // indices: find the card currently aligned (the last stop at/before the
+    // current position, allowing for the scroller's left padding) and step one.
+    // This advances by exactly one group whether the scroller rests at 0 or has
+    // already snapped the first card to its padded offset.
+    const indexAt = (stops, cur) => {
+      let idx = 0;
+      for (let i = 0; i < stops.length; i++) if (stops[i] <= cur + 8) idx = i;
+      return idx;
+    };
     const goTo = (dir) => {
       const stops = cardLefts();
       if (!stops.length) return;
-      const cur = scroller.scrollLeft, eps = 4;
-      let target;
-      if (dir > 0) target = stops.find((l) => l > cur + eps);
-      else { const before = stops.filter((l) => l < cur - eps); target = before.length ? before[before.length - 1] : stops[0]; }
-      if (target == null) target = dir > 0 ? scroller.scrollWidth : stops[0];
-      scroller.scrollTo({ left: target, behavior: "smooth" });
+      const ni = Math.min(stops.length - 1, Math.max(0, indexAt(stops, scroller.scrollLeft) + dir));
+      scroller.scrollTo({ left: stops[ni], behavior: "smooth" });
     };
     const update = () => {
+      const stops = cardLefts();
       const max = scroller.scrollWidth - scroller.clientWidth - 2;
-      const first = cardLefts()[0] || 0;
-      prev.disabled = scroller.scrollLeft <= first + 4;
+      prev.disabled = scroller.scrollLeft <= (stops[0] || 0) + 8;
       next.disabled = scroller.scrollLeft >= max;
     };
     prev.addEventListener("click", () => goTo(-1));

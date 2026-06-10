@@ -89,7 +89,10 @@
       // A pair meets at most once in a knockout, but keep the latest just in case.
       if (!koBySet[k] || ev.date > koBySet[k].date) koBySet[k] = ev;
     });
-    const proj = window.WC_ENGINE.projector(D);
+    // settledOnly: only lock a knockout slot's teams once the group is fully
+    // played — never off a partial-standings projection (this pass resolves
+    // knockout slots before merging the freshly fetched group games below).
+    const proj = window.WC_ENGINE.projector(D, { settledOnly: true });
     ["R32", "R16", "QF", "SF", "3P", "F"].forEach((round) => {
       D.knockoutFixtures.filter((f) => f.round === round).forEach((f) => {
         const t = proj.teams(f);
