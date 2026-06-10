@@ -60,6 +60,10 @@ Per match, each team earns its owner:
 
 These live in `data.js → config.points` and can be changed.
 
+The **League tab** ranks all 48 teams by the sweepstake points they've accrued
+under these rules (regardless of who drew them), with each team's owner badge
+alongside — a single league table of the whole tournament.
+
 ## Deployment
 
 The site is deployed on **Vercel**, connected to this GitHub repo. Pushes to
