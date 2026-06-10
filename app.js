@@ -698,12 +698,6 @@
   function start() {
     if (started) return; started = true;
     show(views[location.hash.slice(1)] ? location.hash.slice(1) : "leaderboard");
-    const who = document.getElementById("whoami");
-    if (who && ME) {
-      who.innerHTML = `<span class="pchip" style="background:${colorFor(ME)}"></span>Signed in as <b>${esc(ME)}</b> <span class="switch">switch</span>`;
-      who.classList.add("show");
-      who.addEventListener("click", () => { try { localStorage.removeItem(ME_KEY); } catch (_) {} location.reload(); });
-    }
     refreshLive(false); // <-- the API is called once, when the user signs in
   }
 
