@@ -119,6 +119,8 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
 table.standings { width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-bottom: 0.8rem; }
 table.standings th, table.standings td { padding: 0.35rem 0.3rem; text-align: center; border-bottom: 1px solid var(--line); }
 table.standings th { color: var(--muted); font-weight: 600; font-size: 0.72rem; }
+/* reserve two lines so rows stay uniform when a long name wraps */
+table.standings tbody td { height: 2.6rem; }
 table.standings .tname { text-align: left; min-width: 130px; }
 table.standings tr.qual td { background: rgba(26,107,74,0.06); }
 table.standings tr.third td { background: rgba(184,134,11,0.06); }
@@ -128,6 +130,8 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .fx {
   display: grid; grid-template-columns: 64px 1fr auto 1fr; align-items: center;
   gap: 0.4rem; padding: 0.35rem 0.5rem; border-radius: 8px; background: var(--panel2); font-size: 0.85rem;
+  /* reserve two lines so every fixture row is the same height, even when a long name wraps */
+  min-height: 3.1rem;
 }
 .fx .date { color: var(--muted); font-size: 0.72rem; display: flex; flex-direction: column; line-height: 1.2; }
 .fx .date small { font-size: 0.66rem; opacity: 0.8; }
