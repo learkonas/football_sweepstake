@@ -68,8 +68,12 @@
     const standCache = {};
     const stand = (g) => standCache[g] || (standCache[g] = groupStandings(D, g));
     const groups12 = "ABCDEFGHIJKL".split("");
-    const groupDone = {};
-    groups12.forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
+    const groupDone = {}, groupStarted = {};
+    groups12.forEach((g) => {
+      const gf = D.groupFixtures.filter((f) => f.group === g);
+      groupDone[g] = gf.every((f) => f.played);
+      groupStarted[g] = gf.some((f) => f.played);
+    });
 
     // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA Annex C)
     let winnerToThird = null;
@@ -91,7 +95,9 @@
       const src = which === "home" ? f.srcHome : f.srcAway;
       if (f.round === "R32") {
         const m = /^([A-L])([12])$/.exec(src || "");
-        if (m && groupDone[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
+        // Project the winner/runner-up from the latest standings as soon as the
+        // group has kicked off — not only once every group game is played.
+        if (m && groupStarted[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
         if (/^3rd/.test(src || "") && winnerToThird) {
           const other = which === "home" ? f.srcAway : f.srcHome;
           const wm = /^([A-L])1$/.exec(other || "");

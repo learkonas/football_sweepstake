@@ -233,8 +233,9 @@
     </div>`;
   }
 
-  // Mobile arrows for the group scroller: step by one card width and reflect the
-  // scroll position in the buttons' disabled state.
+  // Mobile arrows for the group scroller: snap to the next/previous group card
+  // (whatever its width) rather than a fixed step, and reflect the scroll
+  // position in the buttons' disabled state.
   function wireGroupsNav() {
     const wrap = content.querySelector(".groups-wrap");
     if (!wrap) return;
@@ -242,19 +243,33 @@
     const prev = wrap.querySelector(".gnav.prev");
     const next = wrap.querySelector(".gnav.next");
     if (!scroller || !prev || !next) return;
-    const step = () => {
-      const card = scroller.querySelector(".card");
-      const cs = getComputedStyle(scroller);
-      const gap = parseFloat(cs.columnGap || cs.gap) || 16;
-      return card ? card.getBoundingClientRect().width + gap : scroller.clientWidth * 0.8;
+    // Each card's left edge in the scroller's content coordinate space, robust to
+    // varying card widths and to however the cards are positioned.
+    const cardLefts = () => {
+      const base = scroller.getBoundingClientRect().left - scroller.scrollLeft;
+      return Array.from(scroller.querySelectorAll(".card"))
+        .map((c) => Math.round(c.getBoundingClientRect().left - base));
+    };
+    // Each card's left edge is also its scroll-snap point, so navigating to one
+    // cooperates with CSS scroll-snap instead of fighting it.
+    const goTo = (dir) => {
+      const stops = cardLefts();
+      if (!stops.length) return;
+      const cur = scroller.scrollLeft, eps = 4;
+      let target;
+      if (dir > 0) target = stops.find((l) => l > cur + eps);
+      else { const before = stops.filter((l) => l < cur - eps); target = before.length ? before[before.length - 1] : stops[0]; }
+      if (target == null) target = dir > 0 ? scroller.scrollWidth : stops[0];
+      scroller.scrollTo({ left: target, behavior: "smooth" });
     };
     const update = () => {
       const max = scroller.scrollWidth - scroller.clientWidth - 2;
-      prev.disabled = scroller.scrollLeft <= 0;
+      const first = cardLefts()[0] || 0;
+      prev.disabled = scroller.scrollLeft <= first + 4;
       next.disabled = scroller.scrollLeft >= max;
     };
-    prev.addEventListener("click", () => scroller.scrollBy({ left: -step(), behavior: "smooth" }));
-    next.addEventListener("click", () => scroller.scrollBy({ left: step(), behavior: "smooth" }));
+    prev.addEventListener("click", () => goTo(-1));
+    next.addEventListener("click", () => goTo(1));
     scroller.addEventListener("scroll", update, { passive: true });
     update();
   }
@@ -602,31 +617,19 @@
     setTimeout(() => { if (gate) gate.style.display = "none"; }, 550);
   }
 
-  const gateForm = document.getElementById("gate-form");
-  const gateInput = document.getElementById("gate-input");
   const gateChips = document.getElementById("gate-chips");
-  const gateErr = document.getElementById("gate-error");
-  const gateCard = document.querySelector(".gate-card");
 
-  function tryName(raw) {
-    const n = String(raw || "").trim().toLowerCase();
-    if (PLAYERS_LC[n]) { unlock(PLAYERS_LC[n], false); return; }
-    if (gateErr) gateErr.textContent = raw && raw.trim() ? `"${raw.trim()}" isn't on the list` : "Enter your name to continue";
-    if (gateCard) { gateCard.classList.remove("shake"); void gateCard.offsetWidth; gateCard.classList.add("shake"); }
-  }
-
+  // Sign-in is a name picker only: one chip per player, no free-text entry.
   if (gateChips) PLAYERS.forEach((p) => {
     const b = document.createElement("button");
     b.type = "button"; b.className = "gate-chip"; b.textContent = p;
     b.addEventListener("click", () => unlock(p, false));
     gateChips.appendChild(b);
   });
-  if (gateForm) gateForm.addEventListener("submit", (e) => { e.preventDefault(); tryName(gateInput && gateInput.value); });
 
   // already signed in this browser? skip straight in.
   let saved = null; try { saved = localStorage.getItem(ME_KEY); } catch (_) {}
   if (saved && PLAYERS_LC[saved.toLowerCase()]) unlock(PLAYERS_LC[saved.toLowerCase()], true);
-  else if (gateInput) gateInput.focus();
 
   // ---- confetti burst (no dependencies) ----
   function fireConfetti() {

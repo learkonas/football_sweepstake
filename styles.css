@@ -322,33 +322,16 @@ body.locked { overflow: hidden; }
 .gate-kicker { margin: 0.5rem 0 0; color: var(--muted); font-size: 0.72rem; letter-spacing: 0.28em; text-transform: uppercase; }
 .gate-title { margin: 0.3rem 0 0; font-size: 2.2rem; font-weight: 800; letter-spacing: -1px; color: var(--text); }
 .gate-title span { color: var(--accent); }
-.gate-sub { color: var(--muted); margin: 0.6rem 0 1.6rem; font-size: 0.92rem; }
+.gate-sub { color: var(--muted); margin: 0.6rem 0 1.4rem; font-size: 0.92rem; }
 
-#gate-form { display: flex; gap: 0.5rem; }
-#gate-input {
-  flex: 1; padding: 0.8rem 1rem; font-size: 1rem; color: var(--text);
-  background: var(--bg); border: 1px solid var(--line);
-  border-radius: 10px; outline: none; transition: border-color .2s, box-shadow .2s;
-}
-#gate-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,107,74,0.12); }
-.gate-go {
-  padding: 0 1.2rem; font-size: 0.95rem; font-weight: 700; color: #fff; cursor: pointer;
-  background: var(--accent); border: none; border-radius: 10px;
-  transition: transform .12s ease, box-shadow .2s ease;
-}
-.gate-go:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,107,74,0.25); }
-.gate-go:active { transform: translateY(0); }
-
-.gate-chips { display: flex; flex-wrap: wrap; gap: 0.45rem; justify-content: center; margin-top: 1.1rem; }
+.gate-chips { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
 .gate-chip {
-  padding: 0.4rem 0.85rem; font-size: 0.85rem; color: var(--text); cursor: pointer;
+  padding: 0.55rem 1rem; font-size: 0.92rem; font-weight: 600; color: var(--text); cursor: pointer;
   background: var(--panel2); border: 1px solid var(--line);
-  border-radius: 999px; transition: background .15s, border-color .15s, transform .12s;
+  border-radius: 999px; transition: background .15s, border-color .15s, transform .12s, box-shadow .2s;
 }
-.gate-chip:hover { background: var(--bg); border-color: var(--accent); transform: translateY(-1px); }
-.gate-error { min-height: 1.2em; margin: 0.9rem 0 0; color: #c0392b; font-size: 0.85rem; }
-.gate-card.shake { animation: shake .45s; }
-@keyframes shake { 10%,90%{transform:translateX(-2px)} 20%,80%{transform:translateX(4px)} 30%,50%,70%{transform:translateX(-8px)} 40%,60%{transform:translateX(8px)} }
+.gate-chip:hover { background: var(--bg); border-color: var(--accent); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(26,107,74,0.18); }
+.gate-chip:active { transform: translateY(0); }
 
 .confetti { position: fixed; inset: 0; z-index: 1001; pointer-events: none; }
 
