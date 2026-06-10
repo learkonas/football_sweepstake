@@ -111,6 +111,22 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
 .card { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 1rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .card h3 { margin: 0 0 0.7rem; font-size: 1.1rem; display: flex; align-items: center; gap: 0.4rem; }
 
+/* group stage scroller + its mobile navigation arrows */
+.groups-wrap { position: relative; }
+.gnav {
+  display: none; position: fixed; bottom: 1rem;
+  z-index: 50; width: 44px; height: 44px; border-radius: 50%;
+  align-items: center; justify-content: center;
+  background: var(--panel); border: 1px solid var(--line); color: var(--accent);
+  font-size: 1.5rem; line-height: 1; cursor: pointer;
+  box-shadow: 0 3px 12px rgba(0,0,0,0.2);
+  transition: opacity .15s ease, border-color .15s ease;
+}
+.gnav.prev { right: 4.2rem; }
+.gnav.next { right: 1rem; }
+.gnav:disabled { opacity: 0.3; cursor: default; }
+.gnav:not(:disabled):hover { border-color: var(--accent); }
+
 /* horizontal scroller (group stage) — one row, edges faded out */
 .hscroll {
   display: flex; gap: 1rem; overflow-x: auto; overflow-y: hidden;
@@ -197,6 +213,21 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .tpwhen { color: var(--muted); font-size: 0.7rem; margin: 0.35rem 0 0; max-width: 124px; }
 .brkey { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.8rem; margin-top: 1rem; flex-wrap: wrap; }
 .brkey .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+
+/* desktop bracket hover tooltip */
+.bxtip {
+  position: fixed; z-index: 1002; pointer-events: none;
+  max-width: 260px; padding: 0.55rem 0.7rem;
+  background: #1a1a1a; color: #fff; border-radius: 8px;
+  font-size: 0.78rem; line-height: 1.4;
+  box-shadow: 0 6px 24px rgba(0,0,0,0.28);
+  opacity: 0; transform: translateY(4px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+.bxtip.show { opacity: 1; transform: none; }
+.bxtip-h { font-weight: 700; display: flex; flex-direction: column; gap: 0.1rem; margin-bottom: 0.35rem; }
+.bxtip-when { font-weight: 500; color: #d8c27a; font-size: 0.72rem; }
+.bxtip-paths { display: flex; flex-direction: column; gap: 0.2rem; color: #d6d6d6; }
 
 /* knockout as a stacked list (mobile) */
 .ko-list { display: flex; flex-direction: column; gap: 1.3rem; }
@@ -355,6 +386,8 @@ table.board tr.me td:nth-child(2)::after { content: " you"; color: var(--accent)
   .tabs::-webkit-scrollbar { display: none; }
   .tab { flex: 1 0 auto; padding: 0.5rem 0.9rem; }
   .hscroll > .card { flex-basis: 84vw; max-width: 360px; }
+  /* group navigation arrows are mobile-only */
+  .gnav { display: inline-flex; }
 }
 
 @media (max-width: 480px) {
