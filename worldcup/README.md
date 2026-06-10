@@ -5,10 +5,13 @@ between **Dazzo, Cones, Alex, Bilal, and Leo**. No build step, no server.
 
 ## Run it
 
-Open `index.html` in any browser (double-click it), or host the `worldcup/`
-folder on any static web server — both work. There's a sign-in screen: enter
-your name (Dazzo / Cones / Alex / Bilal / Leo) and the site reveals itself. Once
-you're in, results load automatically; you can also edit `data.js` by hand.
+The site is deployed on Vercel — visit the live URL and enter your name
+(Dazzo / Cones / Alex / Bilal / Leo) at the sign-in screen. Once you're in,
+results load automatically.
+
+To run locally, open `worldcup/index.html` directly in a browser. Everything
+works offline except the ESPN results fetch, which falls back silently to the
+seed data in `data.js`.
 
 ## Files
 
@@ -57,18 +60,14 @@ Per match, each team earns its owner:
 
 These live in `data.js → config.points` and can be changed.
 
-## Deploying online
+## Deployment
 
-The site is plain static files, so any host works (GitHub Pages, Netlify,
-Vercel, S3, your own server). Upload the `worldcup/` folder — paths are all
-relative, so it works from a subfolder too. Serve over **HTTPS** so the results
-fetch (also HTTPS) isn't blocked as mixed content. There's no build step, no
-server, and nothing scheduled: every visitor's browser pulls results from ESPN
-when they sign in.
+The site is deployed on **Vercel**, connected to this GitHub repo. Pushes to
+`main` deploy automatically. There's no build step, no server, and nothing
+scheduled — every visitor's browser pulls results from ESPN when they sign in.
 
 > Note: the sign-in is a friendly name-picker for personalisation, **not
 > security** — it's all client-side, so anyone can pick any of the five names.
-> For real access control you'd need a host-level password or a backend.
 
 ## Updating results manually (≈30 seconds)
 
