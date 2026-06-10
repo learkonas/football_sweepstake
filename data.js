@@ -16,11 +16,7 @@ window.WC_DATA = {
       "Mr Nas"
     ],
     "eliminatedTeams": [],
-    "unallocated": [
-      "Haiti",
-      "England",
-      "Croatia"
-    ],
+    "unallocated": [],
     "live": {
       "enabled": true,
       "source": "espn",
