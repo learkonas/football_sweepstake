@@ -212,7 +212,7 @@
       const srows = standings.map((r, i) => `<tr class="${i < 2 ? "qual" : i === 2 ? "third" : ""}">
         <td class="tname">${teamLabel(r.team)}</td>
         <td>${r.P}</td><td>${r.W}</td><td>${r.Dr}</td><td>${r.L}</td>
-        <td>${r.GF}</td><td>${r.GA}</td><td>${r.GD > 0 ? "+" + r.GD : r.GD}</td><td class="pts">${r.Pts}</td>
+        <td>${r.GD > 0 ? "+" + r.GD : r.GD}</td><td class="pts">${r.Pts}</td>
       </tr>`).join("");
       const fixtures = D.groupFixtures.filter((f) => f.group === g)
         .sort((a, b) => a.matchday - b.matchday || a.date.localeCompare(b.date))
@@ -220,7 +220,7 @@
       return `<section class="card">
         <h3>Group ${g}</h3>
         <table class="standings">
-          <thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>Pts</th></tr></thead>
+          <thead><tr><th class="tname">Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead>
           <tbody>${srows}</tbody>
         </table>
         <div class="fixtures">${fixtures}</div>
