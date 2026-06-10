@@ -191,7 +191,7 @@
   }
 
   function renderGroups() {
-    return `<div class="grid">` + Object.keys(WC_GROUPS()).map((g) => {
+    return `<div class="hscroll groups-scroll">` + Object.keys(WC_GROUPS()).map((g) => {
       const standings = groupStandings(g);
       const srows = standings.map((r, i) => `<tr class="${i < 2 ? "qual" : i === 2 ? "third" : ""}">
         <td class="tname">${teamLabel(r.team)}</td>
@@ -494,8 +494,8 @@
     start();
     requestAnimationFrame(() => { if (site) site.classList.add("reveal"); });
     // let the clouds open a touch before the confetti bursts through
-    if (!reduceMotion) setTimeout(fireConfetti, 450);
-    setTimeout(() => { if (gate) gate.style.display = "none"; }, 2100);
+    if (!reduceMotion) setTimeout(fireConfetti, 220);
+    setTimeout(() => { if (gate) gate.style.display = "none"; }, 1000);
   }
 
   const gateForm = document.getElementById("gate-form");
