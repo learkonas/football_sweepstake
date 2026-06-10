@@ -490,11 +490,12 @@
       start();
       return;
     }
-    if (!reduceMotion) fireConfetti();
-    if (gate) gate.classList.add("exit");
+    if (gate) gate.classList.add("exit"); // clouds part to reveal the app
     start();
     requestAnimationFrame(() => { if (site) site.classList.add("reveal"); });
-    setTimeout(() => { if (gate) gate.style.display = "none"; }, 1000);
+    // let the clouds open a touch before the confetti bursts through
+    if (!reduceMotion) setTimeout(fireConfetti, 450);
+    setTimeout(() => { if (gate) gate.style.display = "none"; }, 2100);
   }
 
   const gateForm = document.getElementById("gate-form");
@@ -531,7 +532,7 @@
     if (!ctx) return;
     const dpr = window.devicePixelRatio || 1;
     c.width = window.innerWidth * dpr; c.height = window.innerHeight * dpr;
-    const colors = ["#19c37d", "#e9a020", "#406cf0", "#9b5de5", "#ff6b6b", "#ffffff"];
+    const colors = ["#1a6b4a", "#b8860b", "#2a9d8f", "#e6b422", "#5b6cf0", "#ffffff"];
     const parts = Array.from({ length: 170 }, () => ({
       x: window.innerWidth / 2 + (Math.random() - 0.5) * 160,
       y: window.innerHeight * 0.52,
