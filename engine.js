@@ -83,15 +83,23 @@
     const winnerOf = (f) => { if (!f || !f.played) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
     const loserOf = (f) => { const w = winnerOf(f); return w ? (w === f.home ? f.away : f.home) : null; };
 
+    // Has a group kicked off yet? Until it has at least one result its standings
+    // are just alphabetical, so there's nothing meaningful to project.
+    const groupStarted = {};
+    groups12.forEach((g) => { groupStarted[g] = D.groupFixtures.some((f) => f.group === g && f.played); });
+
     // Resolve one side of a tie: the real team if known, otherwise a projection
     // from group standings / feeder winners. Returns { team, proj, src }.
+    // R32 group slots project from the latest standings as soon as a group is
+    // under way (not only once it's mathematically settled), so the current top
+    // teams show as projected as results come in.
     function side(f, which) {
       const actual = which === "home" ? f.home : f.away;
       if (actual && actual !== "TBD") return { team: actual, proj: false };
       const src = which === "home" ? f.srcHome : f.srcAway;
       if (f.round === "R32") {
         const m = /^([A-L])([12])$/.exec(src || "");
-        if (m && groupDone[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
+        if (m && groupStarted[m[1]]) { const row = stand(m[1])[Number(m[2]) - 1]; if (row) return { team: row.team, proj: true, src }; }
         if (/^3rd/.test(src || "") && winnerToThird) {
           const other = which === "home" ? f.srcAway : f.srcHome;
           const wm = /^([A-L])1$/.exec(other || "");
