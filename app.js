@@ -124,10 +124,13 @@
     return f.date ? esc(fmtDate(f.date)) : "";
   }
 
+  // Badge initial overrides for players whose displayed letter differs from
+  // the first character of their name.
+  const OWNER_INITIAL = { "Mr Nas": "L" };
   function ownerTag(team) {
     const p = ownerOf[team];
     if (!p) return "";
-    return `<span class="owner" style="background:${colorFor(p)}" title="${esc(p)}">${esc(p[0])}</span>`;
+    return `<span class="owner" style="background:${colorFor(p)}" title="${esc(p)}">${esc(OWNER_INITIAL[p] || p[0])}</span>`;
   }
   // ownerAfter puts the owner badge on the trailing edge (name then badge), used
   // for the right-aligned home side so its badge sits next to the score.
