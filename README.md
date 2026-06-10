@@ -1,12 +1,12 @@
 # World Cup 2026 Sweepstake Tracker
 
 A self-contained static site to track the FIFA World Cup 2026 and the sweepstake
-between **Dazzo, Cones, Alex, Bilal, and Leo**. No build step, no server.
+between **Dazzo, Cones, Burty, Bilal, and Mr Nas**. No build step, no server.
 
 ## Run it
 
 The site is deployed on Vercel — visit the live URL and enter your name
-(Dazzo / Cones / Alex / Bilal / Leo) at the sign-in screen. Once you're in,
+(Dazzo / Cones / Burty / Bilal / Mr Nas) at the sign-in screen. Once you're in,
 results load automatically.
 
 To run locally, open `worldcup/index.html` directly in a browser. Everything
@@ -133,11 +133,11 @@ as they appear in `teams`:
 
 ```js
 "players": {
-  "Dazzo": ["Brazil", "Japan", "..."],
-  "Cones": ["..."],
-  "Alex":  ["..."],
-  "Bilal": ["..."],
-  "Leo":   ["..."]
+  "Dazzo":  ["Bosnia and Herzegovina", "Scotland", "..."],
+  "Cones":  ["..."],
+  "Burty":  ["..."],
+  "Bilal":  ["..."],
+  "Mr Nas": ["..."]
 }
 ```
 

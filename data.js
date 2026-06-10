@@ -11,16 +11,12 @@ window.WC_DATA = {
     "playerOrder": [
       "Dazzo",
       "Cones",
-      "Alex",
+      "Burty",
       "Bilal",
-      "Leo"
+      "Mr Nas"
     ],
     "eliminatedTeams": [],
-    "unallocated": [
-      "Croatia",
-      "Ghana",
-      "Panama"
-    ],
+    "unallocated": [],
     "live": {
       "enabled": true,
       "source": "espn",
@@ -229,59 +225,59 @@ window.WC_DATA = {
   ],
   "players": {
     "Dazzo": [
-      "Mexico",
       "Bosnia and Herzegovina",
-      "Haiti",
-      "Turkey",
-      "Netherlands",
-      "Egypt",
-      "Saudi Arabia",
-      "Norway",
-      "Portugal"
+      "Scotland",
+      "Portugal",
+      "Algeria",
+      "South Korea",
+      "Canada",
+      "Argentina",
+      "Tunisia",
+      "Qatar"
     ],
     "Cones": [
-      "South Africa",
-      "Qatar",
-      "Scotland",
       "Germany",
-      "Japan",
-      "Iran",
-      "Uruguay",
-      "Argentina",
-      "DR Congo"
-    ],
-    "Alex": [
-      "South Korea",
-      "Switzerland",
-      "United States",
-      "Curacao",
-      "Sweden",
+      "Spain",
+      "Ghana",
       "New Zealand",
+      "DR Congo",
+      "Uruguay",
+      "Czechia",
+      "Norway",
+      "Ecuador"
+    ],
+    "Burty": [
+      "Belgium",
+      "Jordan",
+      "Australia",
       "France",
-      "Algeria",
-      "Uzbekistan"
+      "Austria",
+      "Sweden",
+      "Senegal",
+      "Ivory Coast",
+      "Egypt"
     ],
     "Bilal": [
-      "Czechia",
-      "Brazil",
-      "Paraguay",
-      "Ivory Coast",
-      "Tunisia",
-      "Spain",
-      "Senegal",
-      "Austria",
-      "Colombia"
-    ],
-    "Leo": [
-      "Canada",
+      "South Africa",
+      "Switzerland",
+      "Colombia",
+      "Saudi Arabia",
       "Morocco",
-      "Australia",
-      "Ecuador",
-      "Belgium",
+      "Panama",
+      "Netherlands",
+      "Uzbekistan",
+      "Curacao"
+    ],
+    "Mr Nas": [
+      "United States",
+      "Iran",
+      "Turkey",
       "Cape Verde",
+      "Japan",
       "Iraq",
-      "Jordan",
-      "England"
+      "Mexico",
+      "Brazil",
+      "Paraguay"
     ]
   },
   "groupFixtures": [
