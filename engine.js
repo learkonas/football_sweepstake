@@ -70,10 +70,18 @@
     const groups12 = "ABCDEFGHIJKL".split("");
     const groupDone = {};
     groups12.forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
+    // Has a group kicked off yet? Until it has at least one result its standings
+    // are just alphabetical, so there's nothing meaningful to project.
+    const groupStarted = {};
+    groups12.forEach((g) => { groupStarted[g] = D.groupFixtures.some((f) => f.group === g && f.played); });
 
-    // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA Annex C)
+    // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA
+    // Annex C). Projected from the latest standings once every group is under
+    // way (it needs all 12 thirds to pick the best 8 and key the table), so the
+    // 3rd-placed R32 slots fill in as projected rather than waiting for the
+    // group stage to finish.
     let winnerToThird = null;
-    if (groups12.every((g) => groupDone[g]) && window.WC_THIRDS) {
+    if (groups12.every((g) => groupStarted[g]) && window.WC_THIRDS) {
       const ranked = groups12.map((g) => ({ g, r: stand(g)[2] }))
         .sort((a, b) => b.r.Pts - a.r.Pts || b.r.GD - a.r.GD || b.r.GF - a.r.GF || a.g.localeCompare(b.g));
       const alloc = window.WC_THIRDS.table[ranked.slice(0, 8).map((x) => x.g).sort().join("")];
@@ -82,11 +90,6 @@
 
     const winnerOf = (f) => { if (!f || !f.played) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
     const loserOf = (f) => { const w = winnerOf(f); return w ? (w === f.home ? f.away : f.home) : null; };
-
-    // Has a group kicked off yet? Until it has at least one result its standings
-    // are just alphabetical, so there's nothing meaningful to project.
-    const groupStarted = {};
-    groups12.forEach((g) => { groupStarted[g] = D.groupFixtures.some((f) => f.group === g && f.played); });
 
     // Resolve one side of a tie: the real team if known, otherwise a projection
     // from group standings / feeder winners. Returns { team, proj, src }.
