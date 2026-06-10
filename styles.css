@@ -77,7 +77,7 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
 .medal { font-size: 1.05rem; line-height: 1; }
 
 /* match centre (leaderboard) */
-.matchcentre { display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 1rem; margin-top: 1.4rem; }
+.matchcentre { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: 1rem; margin-top: 1.4rem; }
 .mc-col { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 0.6rem 0.9rem 0.8rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .mc-col h3 { margin: 0.3rem 0 0.5rem; font-size: 0.7rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; }
 .mc-row { display: grid; grid-template-columns: 92px 62px minmax(0, 1fr); align-items: center; gap: 0.5rem; padding: 0.5rem 0.4rem; border-bottom: 1px solid var(--line); font-size: 0.85rem; }
@@ -86,13 +86,15 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
 .mc-when small { font-size: 0.94em; opacity: 0.85; }
 .mc-tag { justify-self: start; text-align: center; color: var(--muted); font-size: 0.6rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; border: 1px solid var(--line); border-radius: 999px; padding: 0.1rem 0.4rem; white-space: nowrap; }
 .mc-match { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 0.4rem; }
-/* long names wrap to a second line rather than truncating */
-.mc-side { overflow: hidden; }
-.mc-side .team { max-width: 100%; min-width: 0; }
+/* each side is a flex row: the owner badge sits on the inner edge (next to the
+   score) and long names wrap to a second line rather than truncating */
+.mc-side { display: flex; align-items: center; gap: 0.35rem; min-width: 0; overflow: hidden; }
+.mc-side > * { min-width: 0; }
+.mc-side .owner { flex: 0 0 auto; }
+.mc-side .team { max-width: 100%; }
 .mc-side .tnm { min-width: 0; }
-.mc-side:first-child { justify-self: end; text-align: right; }
-/* owner badge sits on the inner edge (next to the score), not the outer edge */
-.mc-side:first-child .team { flex-direction: row-reverse; }
+.mc-side:first-child { justify-content: flex-end; text-align: right; }
+.mc-side:last-child { justify-content: flex-start; text-align: left; }
 .mc-side.win { font-weight: 700; }
 .mc-sc { font-weight: 700; color: var(--muted); min-width: 34px; text-align: center; font-variant-numeric: tabular-nums; }
 .mc-row.done .mc-sc { color: var(--text); }

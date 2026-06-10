@@ -129,10 +129,10 @@
     if (!p) return "";
     return `<span class="owner" style="background:${colorFor(p)}" title="${esc(p)}">${esc(p[0])}</span>`;
   }
-  function teamLabel(team) {
+  function teamLabel(team, noOwner) {
     if (!team || team === "TBD") return `<span class="team tbd">${esc(team || "TBD")}</span>`;
     const cls = isEliminated(team) ? "team out" : "team";
-    return `<span class="${cls}">${ownerTag(team)}<span class="tnm">${esc(team)}</span></span>`;
+    return `<span class="${cls}">${noOwner ? "" : ownerTag(team)}<span class="tnm">${esc(team)}</span></span>`;
   }
 
   // ---- renderers ----
@@ -170,8 +170,11 @@
     const H = ko ? P.side(f, "home") : { team: f.home, proj: false };
     const A = ko ? P.side(f, "away") : { team: f.away, proj: false };
     const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
-    const sh = bracketSideHtml(f, H, "home", "", "bdg");
-    const sa = bracketSideHtml(f, A, "away", "", "bdg");
+    // Names without the inline owner badge; we place each badge on the inner
+    // edge (next to the score) ourselves so the home side reads "Team Ⓞ".
+    const sh = bracketSideHtml(f, H, "home", "", "bdg", true);
+    const sa = bracketSideHtml(f, A, "away", "", "bdg", true);
+    const ownH = ownerTag(H.team), ownA = ownerTag(A.team);
     const sc = f.played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
     const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Group ${f.group}`;
     const today = f.date === todayStr() ? " today" : "";
@@ -179,9 +182,9 @@
       <span class="mc-when">${mcWhen(f)}</span>
       <span class="mc-tag">${esc(tag)}</span>
       <span class="mc-match">
-        <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}</span>
+        <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}${ownH}</span>
         <span class="mc-sc">${sc}${sh.badge || sa.badge}</span>
-        <span class="mc-side ${sa.isWin ? "win" : ""}">${sa.label}</span>
+        <span class="mc-side ${sa.isWin ? "win" : ""}">${ownA}${sa.label}</span>
       </span>
     </div>`;
   }
@@ -261,13 +264,13 @@
 
   // One side of a tie, as HTML: team (italic if projected) or its source label,
   // plus the score and an aet/pens badge on the winner. Shared by both layouts.
-  function bracketSideHtml(f, S, which, scoreCls, badgeCls) {
+  function bracketSideHtml(f, S, which, scoreCls, badgeCls, noOwner) {
     const score = f.played ? (which === "home" ? f.homeScore : f.awayScore) : "";
     const isWin = f.played && S.team && (f.winner ? f.winner === S.team
       : which === "home" ? f.homeScore > f.awayScore : f.awayScore > f.homeScore);
     const badge = isWin && f.decided && f.decided !== "reg" ? `<sup class="${badgeCls}">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
     const label = S.team
-      ? (S.proj ? `<span class="proj">${teamLabel(S.team)}</span>` : teamLabel(S.team))
+      ? (S.proj ? `<span class="proj">${teamLabel(S.team, noOwner)}</span>` : teamLabel(S.team, noOwner))
       : `<span class="src">${esc(S.src || "TBD")}</span>`;
     return { label, isWin, score, badge };
   }
