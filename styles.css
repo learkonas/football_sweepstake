@@ -247,6 +247,24 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .ko-when { color: var(--muted); font-size: 0.72rem; padding: 0.35rem 0.7rem; border-top: 1px solid var(--line); background: var(--panel2); }
 
 /* player breakdown */
+.psort {
+  display: flex; align-items: center; flex-wrap: wrap; gap: 0.35rem;
+  margin: 0 0 1rem; padding: 0.3rem;
+  background: var(--panel2); border: 1px solid var(--line); border-radius: 12px;
+  width: fit-content; max-width: 100%;
+}
+.psort-label { color: var(--muted); font-size: 0.78rem; font-weight: 600; padding: 0 0.45rem; }
+.psort-btn {
+  background: transparent; color: var(--muted); border: none; white-space: nowrap;
+  padding: 0.4rem 0.85rem; font-size: 0.85rem; font-weight: 600;
+  border-radius: 9px; cursor: pointer;
+  transition: color .15s ease, background .15s ease, box-shadow .15s ease;
+}
+.psort-btn:hover { color: var(--text); }
+.psort-btn.active {
+  background: var(--panel); color: var(--accent);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.04);
+}
 .card.player h3 .ptotal { margin-left: auto; color: var(--accent); font-size: 0.95rem; }
 .card .sub { color: var(--muted); font-size: 0.82rem; margin: -0.3rem 0 0.7rem; }
 .teamlist { list-style: none; margin: 0; padding: 0; }
