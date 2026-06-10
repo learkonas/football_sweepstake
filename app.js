@@ -9,6 +9,10 @@
   const PTS = D.config.points;
   const PLAYERS = D.config.playerOrder;
   let ME = null; // the signed-in player
+  // How each player's team list is ordered on the Players tab.
+  const PSORT_KEY = "wc_player_sort";
+  const PSORTS = ["points", "alpha", "fifa"];
+  let playerSort = PSORTS.includes(localStorage.getItem(PSORT_KEY)) ? localStorage.getItem(PSORT_KEY) : "points";
   const PLAYER_COLORS = ["#e63946", "#2a9d8f", "#e9a020", "#5b6cf0", "#9b5de5"];
   const colorFor = (p) => PLAYER_COLORS[PLAYERS.indexOf(p) % PLAYER_COLORS.length];
 
@@ -316,6 +320,22 @@
     update();
   }
 
+  // Players tab: the segmented control that re-orders every player's team list.
+  function wirePlayersSort() {
+    const bar = content.querySelector(".psort");
+    if (!bar) return;
+    bar.addEventListener("click", (e) => {
+      const btn = e.target.closest(".psort-btn");
+      if (!btn) return;
+      const k = btn.dataset.sort;
+      if (k === playerSort || !PSORTS.includes(k)) return;
+      playerSort = k;
+      try { localStorage.setItem(PSORT_KEY, k); } catch (_) {}
+      content.innerHTML = views.players();
+      wirePlayersSort();
+    });
+  }
+
   // Desktop bracket: a styled tooltip that follows the cursor over a tie, showing
   // the round, kickoff time, and how each side reaches the match.
   function wireBracketTips() {
@@ -513,11 +533,37 @@
     </div>`;
   }
 
+  // Order one player's teams per the active Players-tab sort choice.
+  function sortPlayerTeams(teams, teamPts) {
+    const arr = teams.slice();
+    if (playerSort === "alpha") {
+      arr.sort((a, b) => a.localeCompare(b));
+    } else if (playerSort === "fifa") {
+      // Lower FIFA rank = better; unranked teams sink to the bottom.
+      arr.sort((a, b) => {
+        const ra = teamRank[a], rb = teamRank[b];
+        if (ra == null && rb == null) return a.localeCompare(b);
+        if (ra == null) return 1;
+        if (rb == null) return -1;
+        return ra - rb;
+      });
+    } else {
+      arr.sort((a, b) => (teamPts[b] - teamPts[a]) || a.localeCompare(b));
+    }
+    return arr;
+  }
+
+  const PSORT_LABELS = { points: "Points", alpha: "Alphabetical", fifa: "FIFA ranking" };
+
   function renderPlayers() {
     const stats = playerStats();
-    return `<div class="grid">` + PLAYERS.map((p) => {
+    const sortBar = `<div class="psort" role="group" aria-label="Sort each player's teams">
+      <span class="psort-label">Sort teams by</span>
+      ${PSORTS.map((k) => `<button type="button" class="psort-btn${playerSort === k ? " active" : ""}" data-sort="${k}" aria-pressed="${playerSort === k ? "true" : "false"}">${PSORT_LABELS[k]}</button>`).join("")}
+    </div>`;
+    return sortBar + `<div class="grid">` + PLAYERS.map((p) => {
       const s = stats[p];
-      const teams = D.players[p].slice().sort((a, b) => s.teamPts[b] - s.teamPts[a])
+      const teams = sortPlayerTeams(D.players[p], s.teamPts)
         .map((t) => `<li class="${isEliminated(t) ? "out" : ""}">
           <span>${teamLabel(t)} <small class="grp">${teamGroup[t] || ""}</small></span>
           <span class="trk">${teamRank[t] != null ? `<small class="fifarank" title="FIFA world ranking">#${teamRank[t]}</small>` : ""}<b>${s.teamPts[t]} pt${s.teamPts[t] === 1 ? "" : "s"}</b></span>
@@ -568,6 +614,7 @@
     current = name;
     content.innerHTML = views[name]();
     if (name === "groups") wireGroupsNav();
+    if (name === "players") wirePlayersSort();
     if (name === "bracket" && !isSmallScreen()) wireBracketTips();
     tabs.forEach((t) => {
       const on = t.dataset.view === name;
