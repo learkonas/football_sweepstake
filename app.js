@@ -14,7 +14,8 @@
 
   // ---- lookups ----
   const teamGroup = {};
-  D.teams.forEach((t) => { teamGroup[t.name] = t.group; });
+  const teamRank = {};
+  D.teams.forEach((t) => { teamGroup[t.name] = t.group; teamRank[t.name] = t.rank; });
 
   const ownerOf = {};
   Object.keys(D.players).forEach((p) => D.players[p].forEach((t) => { ownerOf[t] = p; }));
@@ -466,11 +467,13 @@
       const teams = D.players[p].slice().sort((a, b) => s.teamPts[b] - s.teamPts[a])
         .map((t) => `<li class="${isEliminated(t) ? "out" : ""}">
           <span>${teamLabel(t)} <small class="grp">${teamGroup[t] || ""}</small></span>
-          <b>${s.teamPts[t]} pt${s.teamPts[t] === 1 ? "" : "s"}</b>
+          <span class="trk">${teamRank[t] != null ? `<small class="fifarank" title="FIFA world ranking">#${teamRank[t]}</small>` : ""}<b>${s.teamPts[t]} pt${s.teamPts[t] === 1 ? "" : "s"}</b></span>
         </li>`).join("");
+      const ranks = D.players[p].map((t) => teamRank[t]).filter((r) => r != null);
+      const avgRank = ranks.length ? (ranks.reduce((a, b) => a + b, 0) / ranks.length) : null;
       return `<section class="card player ${p === ME ? "me" : ""}">
         <h3><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)} <span class="ptotal">${s.pts} pts</span></h3>
-        <p class="sub">${s.alive}/${D.players[p].length} teams still alive</p>
+        <p class="sub">${s.alive}/${D.players[p].length} teams still alive${avgRank != null ? ` · avg FIFA rank <b>${avgRank.toFixed(1)}</b>` : ""}</p>
         <ul class="teamlist">${teams}</ul>
       </section>`;
     }).join("") + (D.config.unallocated && D.config.unallocated.length
