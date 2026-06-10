@@ -129,10 +129,14 @@
     if (!p) return "";
     return `<span class="owner" style="background:${colorFor(p)}" title="${esc(p)}">${esc(p[0])}</span>`;
   }
-  function teamLabel(team, noOwner) {
+  // ownerAfter puts the owner badge on the trailing edge (name then badge), used
+  // for the right-aligned home side so its badge sits next to the score.
+  function teamLabel(team, noOwner, ownerAfter) {
     if (!team || team === "TBD") return `<span class="team tbd">${esc(team || "TBD")}</span>`;
     const cls = isEliminated(team) ? "team out" : "team";
-    return `<span class="${cls}">${noOwner ? "" : ownerTag(team)}<span class="tnm">${esc(team)}</span></span>`;
+    const own = noOwner ? "" : ownerTag(team);
+    const nm = `<span class="tnm">${esc(team)}</span>`;
+    return `<span class="${cls}">${ownerAfter ? nm + own : own + nm}</span>`;
   }
 
   // ---- renderers ----
@@ -203,7 +207,7 @@
   }
 
   function renderGroups() {
-    return `<div class="hscroll groups-scroll">` + Object.keys(WC_GROUPS()).map((g) => {
+    const cards = Object.keys(WC_GROUPS()).map((g) => {
       const standings = groupStandings(g);
       const srows = standings.map((r, i) => `<tr class="${i < 2 ? "qual" : i === 2 ? "third" : ""}">
         <td class="tname">${teamLabel(r.team)}</td>
@@ -221,7 +225,73 @@
         </table>
         <div class="fixtures">${fixtures}</div>
       </section>`;
-    }).join("") + `</div>`;
+    }).join("");
+    return `<div class="groups-wrap">
+      <button class="gnav prev" type="button" aria-label="Previous groups">&lsaquo;</button>
+      <div class="hscroll groups-scroll">${cards}</div>
+      <button class="gnav next" type="button" aria-label="Next groups">&rsaquo;</button>
+    </div>`;
+  }
+
+  // Mobile arrows for the group scroller: step by one card width and reflect the
+  // scroll position in the buttons' disabled state.
+  function wireGroupsNav() {
+    const wrap = content.querySelector(".groups-wrap");
+    if (!wrap) return;
+    const scroller = wrap.querySelector(".groups-scroll");
+    const prev = wrap.querySelector(".gnav.prev");
+    const next = wrap.querySelector(".gnav.next");
+    if (!scroller || !prev || !next) return;
+    const step = () => {
+      const card = scroller.querySelector(".card");
+      const cs = getComputedStyle(scroller);
+      const gap = parseFloat(cs.columnGap || cs.gap) || 16;
+      return card ? card.getBoundingClientRect().width + gap : scroller.clientWidth * 0.8;
+    };
+    const update = () => {
+      const max = scroller.scrollWidth - scroller.clientWidth - 2;
+      prev.disabled = scroller.scrollLeft <= 0;
+      next.disabled = scroller.scrollLeft >= max;
+    };
+    prev.addEventListener("click", () => scroller.scrollBy({ left: -step(), behavior: "smooth" }));
+    next.addEventListener("click", () => scroller.scrollBy({ left: step(), behavior: "smooth" }));
+    scroller.addEventListener("scroll", update, { passive: true });
+    update();
+  }
+
+  // Desktop bracket: a styled tooltip that follows the cursor over a tie, showing
+  // the round, kickoff time, and how each side reaches the match.
+  function wireBracketTips() {
+    const wrap = content.querySelector(".bracket2-wrap");
+    if (!wrap) return;
+    let tip = document.getElementById("bxtip");
+    if (!tip) { tip = document.createElement("div"); tip.id = "bxtip"; tip.className = "bxtip"; document.body.appendChild(tip); }
+    let active = null;
+    const place = (e) => {
+      const pad = 14, r = tip.getBoundingClientRect();
+      let x = e.clientX + pad, y = e.clientY + pad;
+      if (x + r.width > window.innerWidth - 8) x = e.clientX - pad - r.width;
+      if (y + r.height > window.innerHeight - 8) y = e.clientY - pad - r.height;
+      tip.style.left = Math.max(8, x) + "px";
+      tip.style.top = Math.max(8, y) + "px";
+    };
+    wrap.addEventListener("mouseover", (e) => {
+      const bx = e.target.closest(".bx");
+      if (!bx || bx === active) return;
+      active = bx;
+      const round = bx.getAttribute("data-tround") || "";
+      const when = bx.getAttribute("data-twhen") || "";
+      const home = bx.getAttribute("data-thome") || "";
+      const away = bx.getAttribute("data-taway") || "";
+      tip.innerHTML = `<div class="bxtip-h">${esc(round)}${when ? `<span class="bxtip-when">${esc(when)}</span>` : ""}</div>
+        <div class="bxtip-paths"><div>${esc(home)}</div><div>${esc(away)}</div></div>`;
+      tip.classList.add("show");
+      place(e);
+    });
+    wrap.addEventListener("mousemove", (e) => { if (active) place(e); });
+    wrap.addEventListener("mouseout", (e) => {
+      if (active && !active.contains(e.relatedTarget)) { active = null; tip.classList.remove("show"); }
+    });
   }
 
   function fixtureRow(f, knockout) {
@@ -234,7 +304,7 @@
     }
     return `<div class="fx ${played ? "done" : ""}">
       <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}</span>
-      <span class="side home">${teamLabel(f.home)}</span>
+      <span class="side home">${teamLabel(f.home, false, true)}</span>
       <span class="score">${score}${badge}</span>
       <span class="side away">${teamLabel(f.away)}</span>
     </div>`;
@@ -356,17 +426,14 @@
       const pos = absolute
         ? `style="left:${cx(f.id) - TIE_W / 2}px;top:${yTop(f.round)}px;width:${TIE_W}px;height:${TIE_H}px"`
         : `style="width:${TIE_W}px"`;
-      // Multi-line hover: round + kickoff, then how each side reaches this tie.
+      // Hover tooltip data: round + kickoff, then how each side reaches this tie.
+      // Composed into a styled panel by wireBracketTips().
       const path = (S, which) => {
         const txt = srcText(which === "home" ? f.srcHome : f.srcAway);
         return S.team ? `${S.team} — ${txt}` : txt;
       };
-      const title = [
-        `${ROUND_TITLE[f.round] || f.round}${fmtKick(f) ? " · " + fmtKick(f) : ""}`,
-        path(H, "home"),
-        path(A, "away"),
-      ].join("\n");
-      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} title="${esc(title)}">${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
+      const data = `data-tround="${esc(ROUND_TITLE[f.round] || f.round)}" data-twhen="${esc(fmtKick(f) || "")}" data-thome="${esc(path(H, "home"))}" data-taway="${esc(path(A, "away"))}"`;
+      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} ${data}>${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
     };
 
     const boxes = rows.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
@@ -440,6 +507,8 @@
   function show(name) {
     current = name;
     content.innerHTML = views[name]();
+    if (name === "groups") wireGroupsNav();
+    if (name === "bracket" && !isSmallScreen()) wireBracketTips();
     tabs.forEach((t) => {
       const on = t.dataset.view === name;
       t.classList.toggle("active", on);
