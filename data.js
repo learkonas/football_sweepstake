@@ -9,7 +9,7 @@ window.WC_DATA = {
       "loss": 0
     },
     "playerOrder": [
-      "Dan",
+      "Dazzo",
       "Cones",
       "Burty",
       "Bilal",
@@ -228,7 +228,7 @@ window.WC_DATA = {
     }
   ],
   "players": {
-    "Dan": [
+    "Dazzo": [
       "Bosnia and Herzegovina",
       "Scotland",
       "Portugal",
