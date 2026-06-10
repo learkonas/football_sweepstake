@@ -114,16 +114,25 @@
     return fmtDate(f.date);
   }
   const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  // Match-centre kickoff: date on one line, time (when known) on a second, so the
+  // column stays narrow and leaves room for long team names.
+  function mcWhen(f) {
+    if (f.kickoff) {
+      const d = new Date(f.kickoff);
+      return `${DOW[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}<small>${esc(fmtTime(f.kickoff))}</small>`;
+    }
+    return f.date ? esc(fmtDate(f.date)) : "";
+  }
 
   function ownerTag(team) {
     const p = ownerOf[team];
     if (!p) return "";
     return `<span class="owner" style="background:${colorFor(p)}" title="${esc(p)}">${esc(p[0])}</span>`;
   }
-  function teamLabel(team) {
+  function teamLabel(team, noOwner) {
     if (!team || team === "TBD") return `<span class="team tbd">${esc(team || "TBD")}</span>`;
     const cls = isEliminated(team) ? "team out" : "team";
-    return `<span class="${cls}">${ownerTag(team)}${esc(team)}</span>`;
+    return `<span class="${cls}">${noOwner ? "" : ownerTag(team)}<span class="tnm">${esc(team)}</span></span>`;
   }
 
   // ---- renderers ----
@@ -161,18 +170,21 @@
     const H = ko ? P.side(f, "home") : { team: f.home, proj: false };
     const A = ko ? P.side(f, "away") : { team: f.away, proj: false };
     const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
-    const sh = bracketSideHtml(f, H, "home", "", "bdg");
-    const sa = bracketSideHtml(f, A, "away", "", "bdg");
+    // Names without the inline owner badge; we place each badge on the inner
+    // edge (next to the score) ourselves so the home side reads "Team Ⓞ".
+    const sh = bracketSideHtml(f, H, "home", "", "bdg", true);
+    const sa = bracketSideHtml(f, A, "away", "", "bdg", true);
+    const ownH = ownerTag(H.team), ownA = ownerTag(A.team);
     const sc = f.played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
-    const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Grp ${f.group}`;
+    const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Group ${f.group}`;
     const today = f.date === todayStr() ? " today" : "";
     return `<div class="mc-row ${f.played ? "done" : ""} ${mine ? "mine" : ""}${today}">
-      <span class="mc-when">${esc(fmtKick(f))}</span>
+      <span class="mc-when">${mcWhen(f)}</span>
       <span class="mc-tag">${esc(tag)}</span>
       <span class="mc-match">
-        <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}</span>
+        <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}${ownH}</span>
         <span class="mc-sc">${sc}${sh.badge || sa.badge}</span>
-        <span class="mc-side ${sa.isWin ? "win" : ""}">${sa.label}</span>
+        <span class="mc-side ${sa.isWin ? "win" : ""}">${ownA}${sa.label}</span>
       </span>
     </div>`;
   }
@@ -232,19 +244,33 @@
   const ROUND_SHORT = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", F: "Final" };
   const ROUND_TAG = { R32: "R32", R16: "R16", QF: "QF", SF: "SF", "3P": "3rd place", F: "Final" };
 
+  // Human-readable "how this slot gets filled", for the bracket hover tooltip:
+  // group finish ("A1"), a best-third slot, or the feeder match a winner/loser
+  // advances from ("Winner R32-3").
+  function srcText(src) {
+    if (!src) return "TBD";
+    let m = /^([A-L])([12])$/.exec(src);
+    if (m) return `${m[2] === "1" ? "Winner" : "Runner-up"} of Group ${m[1]}`;
+    m = /^3rd\s+(.+)$/.exec(src);
+    if (m) return `Best 3rd place (from ${m[1]})`;
+    m = /^(Winner|Loser)\s+(.+)$/.exec(src);
+    if (m) return `${m[1]} of ${m[2]}`;
+    return src;
+  }
+
   // Today (local) as YYYY-MM-DD, and a sortable kickoff time for any fixture.
   const todayStr = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`; };
   const whenOf = (f) => new Date(f.kickoff || ((f.date || "9999-12-31") + "T12:00:00")).getTime();
 
   // One side of a tie, as HTML: team (italic if projected) or its source label,
   // plus the score and an aet/pens badge on the winner. Shared by both layouts.
-  function bracketSideHtml(f, S, which, scoreCls, badgeCls) {
+  function bracketSideHtml(f, S, which, scoreCls, badgeCls, noOwner) {
     const score = f.played ? (which === "home" ? f.homeScore : f.awayScore) : "";
     const isWin = f.played && S.team && (f.winner ? f.winner === S.team
       : which === "home" ? f.homeScore > f.awayScore : f.awayScore > f.homeScore);
     const badge = isWin && f.decided && f.decided !== "reg" ? `<sup class="${badgeCls}">${f.decided === "pens" ? "p" : "aet"}</sup>` : "";
     const label = S.team
-      ? (S.proj ? `<span class="proj">${teamLabel(S.team)}</span>` : teamLabel(S.team))
+      ? (S.proj ? `<span class="proj">${teamLabel(S.team, noOwner)}</span>` : teamLabel(S.team, noOwner))
       : `<span class="src">${esc(S.src || "TBD")}</span>`;
     return { label, isWin, score, badge };
   }
@@ -330,7 +356,16 @@
       const pos = absolute
         ? `style="left:${cx(f.id) - TIE_W / 2}px;top:${yTop(f.round)}px;width:${TIE_W}px;height:${TIE_H}px"`
         : `style="width:${TIE_W}px"`;
-      const title = `${H.team || H.src} vs ${A.team || A.src}${fmtKick(f) ? " — " + fmtKick(f) : ""}`;
+      // Multi-line hover: round + kickoff, then how each side reaches this tie.
+      const path = (S, which) => {
+        const txt = srcText(which === "home" ? f.srcHome : f.srcAway);
+        return S.team ? `${S.team} — ${txt}` : txt;
+      };
+      const title = [
+        `${ROUND_TITLE[f.round] || f.round}${fmtKick(f) ? " · " + fmtKick(f) : ""}`,
+        path(H, "home"),
+        path(A, "away"),
+      ].join("\n");
       return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} title="${esc(title)}">${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
     };
 
@@ -494,8 +529,8 @@
     start();
     requestAnimationFrame(() => { if (site) site.classList.add("reveal"); });
     // let the clouds open a touch before the confetti bursts through
-    if (!reduceMotion) setTimeout(fireConfetti, 220);
-    setTimeout(() => { if (gate) gate.style.display = "none"; }, 1000);
+    if (!reduceMotion) setTimeout(fireConfetti, 180);
+    setTimeout(() => { if (gate) gate.style.display = "none"; }, 550);
   }
 
   const gateForm = document.getElementById("gate-form");
