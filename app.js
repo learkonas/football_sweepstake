@@ -94,6 +94,36 @@
     return stats;
   }
 
+  // ---- team league table ----
+  // Sweepstake points accrued by every team across all played matches (group +
+  // knockout), independent of who drew them. Same scoring as the leaderboard.
+  function teamStats() {
+    const stats = {};
+    D.teams.forEach((t) => {
+      stats[t.name] = { team: t.name, group: t.group, pts: 0, P: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0 };
+    });
+
+    function award(team, pts, kind) {
+      const s = stats[team];
+      if (!s) return;
+      s.pts += pts; s.P++; s[kind]++;
+    }
+
+    D.groupFixtures.forEach((f) => {
+      if (!f.played) return;
+      const r = matchResult(f, false);
+      award(f.home, r.homePts, r.kind[0]);
+      award(f.away, r.awayPts, r.kind[1]);
+    });
+    D.knockoutFixtures.forEach((f) => {
+      if (!f.played || f.home === "TBD" || f.away === "TBD") return;
+      const r = matchResult(f, true);
+      award(f.home, r.homePts, r.kind[0]);
+      award(f.away, r.awayPts, r.kind[1]);
+    });
+    return stats;
+  }
+
   // ---- group standings (FIFA tiebreakers incl. head-to-head) live in engine.js ----
   const groupStandings = (g) => window.WC_ENGINE.groupStandings(D, g);
 
@@ -169,6 +199,29 @@
       </tr></thead><tbody>${rows}</tbody></table>
       <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>
       ${renderMatchCentre()}`;
+  }
+
+  // League: every team ranked by the sweepstake points it has accrued. Ties
+  // break on wins, then shootout wins, then fewest games played, then name.
+  function renderLeague() {
+    const stats = teamStats();
+    const ranked = D.teams.map((t) => stats[t.name]).sort((a, b) =>
+      b.pts - a.pts || b.win - a.win || b.penWin - a.penWin || a.P - b.P || a.team.localeCompare(b.team));
+    const rows = ranked.map((s, i) => `<tr class="${ownerOf[s.team] === ME ? "mine" : ""}">
+      <td class="rank">${i + 1}</td>
+      <td class="tname">${teamLabel(s.team)} <small class="grp">${esc(s.group)}</small></td>
+      <td>${s.P}</td>
+      <td class="pts">${s.pts}</td>
+      <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
+    </tr>`).join("");
+    return `<table class="board league">
+      <thead><tr>
+        <th>#</th><th class="tname">Team</th>
+        <th title="Matches played">P</th><th>Pts</th>
+        <th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th>
+        <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      <p class="rules">Every team ranked by sweepstake points: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90. Badges show the owner; eliminated teams are greyed out.</p>`;
   }
 
   // Compact match row for the leaderboard's match centre. Resolves knockout
@@ -493,6 +546,7 @@
     leaderboard: renderLeaderboard,
     groups: renderGroups,
     bracket: renderBracket,
+    league: renderLeague,
     players: renderPlayers,
   };
   const content = document.getElementById("content");
