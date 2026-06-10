@@ -71,7 +71,7 @@
   function playerStats() {
     const stats = {};
     PLAYERS.forEach((p) => {
-      stats[p] = { pts: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0, alive: 0, teamPts: {} };
+      stats[p] = { pts: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0, alive: 0, gf: 0, ga: 0, teamPts: {} };
       D.players[p].forEach((t) => { stats[p].teamPts[t] = 0; if (!isEliminated(t)) stats[p].alive++; });
     });
 
@@ -83,17 +83,30 @@
       stats[p][kind]++;
     }
 
+    // Goals for/against go to a team's owner from the 90/ET scoreline (penalty
+    // shootouts don't count as goals), feeding the player goal-difference tiebreak.
+    function addGoals(team, gf, ga) {
+      const p = ownerOf[team];
+      if (!p || typeof gf !== "number" || typeof ga !== "number") return;
+      stats[p].gf += gf;
+      stats[p].ga += ga;
+    }
+
     D.groupFixtures.forEach((f) => {
       if (!f.played) return;
       const r = matchResult(f, false);
       award(f.home, r.homePts, r.kind[0]);
       award(f.away, r.awayPts, r.kind[1]);
+      addGoals(f.home, f.homeScore, f.awayScore);
+      addGoals(f.away, f.awayScore, f.homeScore);
     });
     D.knockoutFixtures.forEach((f) => {
       if (!f.played || f.home === "TBD" || f.away === "TBD") return;
       const r = matchResult(f, true);
       award(f.home, r.homePts, r.kind[0]);
       award(f.away, r.awayPts, r.kind[1]);
+      addGoals(f.home, f.homeScore, f.awayScore);
+      addGoals(f.away, f.awayScore, f.homeScore);
     });
     return stats;
   }
@@ -557,11 +570,18 @@
 
   function renderPlayers() {
     const stats = playerStats();
+    const ranked = PLAYERS.slice().sort((a, b) => {
+      const A = stats[a], B = stats[b];
+      return (B.pts - A.pts)
+        || ((B.gf - B.ga) - (A.gf - A.ga))
+        || (B.gf - A.gf)
+        || a.localeCompare(b);
+    });
     const sortBar = `<div class="psort" role="group" aria-label="Sort each player's teams">
       <span class="psort-label">Sort teams by</span>
       ${PSORTS.map((k) => `<button type="button" class="psort-btn${playerSort === k ? " active" : ""}" data-sort="${k}" aria-pressed="${playerSort === k ? "true" : "false"}">${PSORT_LABELS[k]}</button>`).join("")}
     </div>`;
-    return sortBar + `<div class="grid">` + PLAYERS.map((p) => {
+    return sortBar + `<div class="grid">` + ranked.map((p) => {
       const s = stats[p];
       const teams = sortPlayerTeams(D.players[p], s.teamPts)
         .map((t) => `<li class="${isEliminated(t) ? "out" : ""}">
