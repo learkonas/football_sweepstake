@@ -79,9 +79,12 @@ table.board td.pname { white-space: nowrap; width: 1%; }
 table.board td.pname .pname-box { display: flex; align-items: center; min-height: 1.75em; line-height: 1.25; white-space: nowrap; }
 .rules { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 1rem; }
 .rules b { color: var(--text); }
-table.board tr.leader td { background: rgba(184,134,11,0.08); }
+/* Row tints sit on the <tr> (not each <td>) so a highlight reads as one
+   continuous band across the row — in particular the leader+me gradient
+   spans the whole width instead of restarting inside every cell. */
+table.board tr.leader { background: rgba(184,134,11,0.08); }
 table.board tr.leader td.pts { color: var(--gold); }
-table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11,0.10), rgba(26,107,74,0.08)); }
+table.board tr.leader.me { background: linear-gradient(90deg, rgba(184,134,11,0.10), rgba(26,107,74,0.08)); }
 .medal { font-size: 1.05rem; line-height: 1; }
 
 /* match centre (leaderboard) */
@@ -401,9 +404,9 @@ body.locked { overflow: hidden; }
 .whoami b { color: var(--text); }
 .whoami .switch { color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 0.35rem; font-size: 0.72rem; }
 .whoami:hover .switch { border-color: var(--accent); color: var(--text); }
-table.board tr.me td { background: rgba(26,107,74,0.08); }
+table.board tr.me { background: rgba(26,107,74,0.08); }
 table.board tr.me td:nth-child(2)::after { content: " you"; color: var(--accent); font-size: 0.7rem; font-weight: 700; }
-table.board.league tr.mine td { background: rgba(26,107,74,0.08); }
+table.board.league tr.mine { background: rgba(26,107,74,0.08); }
 table.board.league td.tname { white-space: nowrap; }
 .card.player.me { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(26,107,74,0.10); }
 
