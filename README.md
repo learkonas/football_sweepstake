@@ -32,9 +32,13 @@ CORS-enabled so the browser can call it directly. **One request returns all 104
 matches**, including the per-team winner flag and penalty-shootout tallies, so
 **knockout winners (including shootouts) are detected automatically**.
 
-- The fetch happens **in-browser, once, right after you sign in** (there's no
-  background polling and no server/cron). A status line shows the result, and a
-  **Refresh** button re-pulls on demand.
+- The first fetch happens **in-browser, right after you sign in** (no
+  server/cron). After that it **auto-refreshes** — every minute while a match is
+  in play, every five otherwise — and a **Refresh** button re-pulls on demand. A
+  status line shows how many matches are live and how many results are in.
+- **Matches in play show their running score live**, with the date, time and
+  clock in bold and a pulsing red marker. The in-progress score is shown but not
+  counted toward standings or points until the match is final.
 - If ESPN is unreachable, it silently falls back to whatever is saved in
   `data.js`.
 - Matching logic is **by team identity, so there's no fixture-id table to

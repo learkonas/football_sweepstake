@@ -253,11 +253,13 @@
     const sh = bracketSideHtml(f, H, "home", "", "bdg", true);
     const sa = bracketSideHtml(f, A, "away", "", "bdg", true);
     const ownH = ownerTag(H.team), ownA = ownerTag(A.team);
-    const sc = f.played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
+    const isLive = !!f.live;
+    const sc = (f.played || isLive) ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
     const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Group ${f.group}`;
     const today = f.date === todayStr() ? " today" : "";
-    return `<div class="mc-row ${f.played ? "done" : ""} ${mine ? "mine" : ""}${today}">
-      <span class="mc-when">${mcWhen(f)}</span>
+    const liveBadge = isLive ? `<span class="mc-live">${esc(f.liveDetail || "LIVE")}</span>` : "";
+    return `<div class="mc-row ${f.played ? "done" : ""} ${isLive ? "live" : ""} ${mine ? "mine" : ""}${today}">
+      <span class="mc-when">${mcWhen(f)}${liveBadge}</span>
       <span class="mc-tag">${esc(tag)}</span>
       <span class="mc-match">
         <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}${ownH}</span>
@@ -270,9 +272,11 @@
   function renderMatchCentre() {
     const P = window.WC_ENGINE.projector(D);
     const all = D.groupFixtures.concat(D.knockoutFixtures);
+    const live = all.filter((f) => f.live).sort((a, b) => whenOf(a) - whenOf(b));
     const played = all.filter((f) => f.played).sort((a, b) => whenOf(b) - whenOf(a));
-    const upcoming = all.filter((f) => !f.played && f.date).sort((a, b) => whenOf(a) - whenOf(b));
-    const results = played.slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">No results in yet — kicks off ${esc(fmtDate(D.groupFixtures[0] && D.groupFixtures[0].date))}.</p>`;
+    const upcoming = all.filter((f) => !f.played && !f.live && f.date).sort((a, b) => whenOf(a) - whenOf(b));
+    // Live matches lead the results column so the in-play score is the first thing you see.
+    const results = live.concat(played).slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">No results in yet — kicks off ${esc(fmtDate(D.groupFixtures[0] && D.groupFixtures[0].date))}.</p>`;
     const next = upcoming.slice(0, 6).map((f) => mcRow(f, P)).join("") || `<p class="mc-empty">Tournament complete 🏆</p>`;
     return `<div class="matchcentre">
       <section class="mc-col"><h3>Latest results</h3>${results}</section>
@@ -386,14 +390,16 @@
 
   function fixtureRow(f, knockout) {
     const played = f.played;
-    const score = played ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
+    const isLive = !!f.live;
+    const score = (played || isLive) ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
     let badge = "";
     if (knockout && played && f.decided) {
       const label = f.decided === "pens" ? "pens" : f.decided === "et" ? "AET" : "";
       if (label) badge = `<span class="decided">${label}</span>`;
     }
-    return `<div class="fx ${played ? "done" : ""}">
-      <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}</span>
+    const liveBadge = isLive ? `<small class="fx-live">${esc(f.liveDetail || "LIVE")}</small>` : "";
+    return `<div class="fx ${played ? "done" : ""} ${isLive ? "live" : ""}">
+      <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}${liveBadge}</span>
       <span class="side home">${teamLabel(f.home, false, true)}</span>
       <span class="score">${score}${badge}</span>
       <span class="side away">${teamLabel(f.away)}</span>
@@ -671,6 +677,16 @@
   const refreshBtn = document.getElementById("live-refresh");
   function setStatus(text, cls) { if (statusEl) { statusEl.textContent = text; statusEl.className = "live-status " + (cls || ""); } }
 
+  // Poll faster while a match is in play so the in-progress score keeps ticking,
+  // and back off when nothing is live.
+  let liveTimer = null;
+  function scheduleLive() {
+    if (liveTimer) clearTimeout(liveTimer);
+    if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) return;
+    const anyLive = D.groupFixtures.concat(D.knockoutFixtures).some((f) => f.live);
+    liveTimer = setTimeout(() => refreshLive(false), anyLive ? 60000 : 5 * 60000);
+  }
+
   async function refreshLive(manual) {
     if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) { setStatus("Showing saved results — edit data.js to update", "muted"); if (refreshBtn) refreshBtn.style.display = "none"; return; }
     setStatus("Fetching latest results…", "loading");
@@ -679,12 +695,14 @@
       recompute();
       show(current);
       const t = r.time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      setStatus(`Live · ${r.finished} results in · updated ${t}`, "ok");
+      const livePart = r.live ? `${r.live} in play · ` : "";
+      setStatus(`Live · ${livePart}${r.finished} results in · updated ${t}`, "ok");
     } else if (r.skipped) {
       setStatus("Manual mode — edit data.js", "muted");
     } else {
       setStatus("Offline — showing saved data" + (manual ? " (retry failed)" : ""), "warn");
     }
+    scheduleLive();
   }
   if (refreshBtn) refreshBtn.addEventListener("click", () => refreshLive(true));
 

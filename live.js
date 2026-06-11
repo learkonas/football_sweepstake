@@ -52,6 +52,8 @@
         awayWin: a.winner === true,
         shootout: toNum(h.shootoutScore) !== null || toNum(a.shootoutScore) !== null,
         finished: ty.completed === true || ty.state === "post",
+        inProgress: ty.state === "in",          // ESPN: pre | in | post
+        detail: String(ty.shortDetail || ty.detail || ""),  // e.g. "45'", "HT"
         statusName: (ty.name || "") + " " + (ty.detail || ""),
         period: (c.status && c.status.period) || 0,
       };
@@ -72,7 +74,7 @@
     // windows. Derived from the data so there's nothing to hand-maintain.
     const koStart = D.knockoutFixtures.reduce((m, f) => (f.date && f.date < m) ? f.date : m, "9999-99-99");
     const consumed = new Set();
-    let updated = 0, finished = 0;
+    let updated = 0, finished = 0, live = 0;
 
     function applyResult(f, ev) {
       const home = canon(ev.home);
@@ -107,7 +109,16 @@
           f.winner = ev.homeWin ? home : ev.awayWin ? away
             : (f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null);
           f.played = true;
+          f.live = false;
           finished++;
+        } else if (ev.inProgress) {
+          // Match underway: show the running score without counting it yet.
+          applyResult(f, ev);
+          f.live = true;
+          f.liveDetail = ev.detail;
+          live++;
+        } else {
+          f.live = false;
         }
         updated++;
       });
@@ -125,12 +136,21 @@
       if (ev.finished) {
         applyResult(gf, ev);
         gf.played = true;
+        gf.live = false;
         finished++;
+      } else if (ev.inProgress) {
+        // Match underway: show the running score without counting it yet.
+        applyResult(gf, ev);
+        gf.live = true;
+        gf.liveDetail = ev.detail;
+        live++;
+      } else {
+        gf.live = false;
       }
       updated++;
     });
 
-    return { updated, finished };
+    return { updated, finished, live };
   }
 
   // ---- public API ----
