@@ -37,7 +37,7 @@ window.WC_DATA = {
     {
       "name": "Mexico",
       "group": "A",
-      "rank": 15
+      "rank": 14
     },
     {
       "name": "South Africa",
@@ -52,7 +52,7 @@ window.WC_DATA = {
     {
       "name": "Czechia",
       "group": "A",
-      "rank": 41
+      "rank": 40
     },
     {
       "name": "Canada",
@@ -62,12 +62,12 @@ window.WC_DATA = {
     {
       "name": "Bosnia and Herzegovina",
       "group": "B",
-      "rank": 65
+      "rank": 64
     },
     {
       "name": "Qatar",
       "group": "B",
-      "rank": 55
+      "rank": 56
     },
     {
       "name": "Switzerland",
@@ -82,7 +82,7 @@ window.WC_DATA = {
     {
       "name": "Morocco",
       "group": "C",
-      "rank": 8
+      "rank": 7
     },
     {
       "name": "Haiti",
@@ -92,17 +92,17 @@ window.WC_DATA = {
     {
       "name": "Scotland",
       "group": "C",
-      "rank": 43
+      "rank": 42
     },
     {
       "name": "United States",
       "group": "D",
-      "rank": 16
+      "rank": 17
     },
     {
       "name": "Paraguay",
       "group": "D",
-      "rank": 40
+      "rank": 41
     },
     {
       "name": "Australia",
@@ -127,7 +127,7 @@ window.WC_DATA = {
     {
       "name": "Ivory Coast",
       "group": "E",
-      "rank": 34
+      "rank": 33
     },
     {
       "name": "Ecuador",
@@ -137,7 +137,7 @@ window.WC_DATA = {
     {
       "name": "Netherlands",
       "group": "F",
-      "rank": 7
+      "rank": 8
     },
     {
       "name": "Japan",
@@ -152,7 +152,7 @@ window.WC_DATA = {
     {
       "name": "Tunisia",
       "group": "F",
-      "rank": 44
+      "rank": 45
     },
     {
       "name": "Belgium",
@@ -167,7 +167,7 @@ window.WC_DATA = {
     {
       "name": "Iran",
       "group": "G",
-      "rank": 21
+      "rank": 20
     },
     {
       "name": "New Zealand",
@@ -182,7 +182,7 @@ window.WC_DATA = {
     {
       "name": "Cape Verde",
       "group": "H",
-      "rank": 69
+      "rank": 67
     },
     {
       "name": "Saudi Arabia",
@@ -192,17 +192,17 @@ window.WC_DATA = {
     {
       "name": "Uruguay",
       "group": "H",
-      "rank": 17
+      "rank": 16
     },
     {
       "name": "France",
       "group": "I",
-      "rank": 1
+      "rank": 3
     },
     {
       "name": "Senegal",
       "group": "I",
-      "rank": 14
+      "rank": 15
     },
     {
       "name": "Iraq",
@@ -217,7 +217,7 @@ window.WC_DATA = {
     {
       "name": "Argentina",
       "group": "J",
-      "rank": 3
+      "rank": 1
     },
     {
       "name": "Algeria",
@@ -267,12 +267,12 @@ window.WC_DATA = {
     {
       "name": "Ghana",
       "group": "L",
-      "rank": 74
+      "rank": 73
     },
     {
       "name": "Panama",
       "group": "L",
-      "rank": 33
+      "rank": 34
     }
   ],
   "players": {
