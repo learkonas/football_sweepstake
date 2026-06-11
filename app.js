@@ -677,16 +677,6 @@
   const refreshBtn = document.getElementById("live-refresh");
   function setStatus(text, cls) { if (statusEl) { statusEl.textContent = text; statusEl.className = "live-status " + (cls || ""); } }
 
-  // Poll faster while a match is in play so the in-progress score keeps ticking,
-  // and back off when nothing is live.
-  let liveTimer = null;
-  function scheduleLive() {
-    if (liveTimer) clearTimeout(liveTimer);
-    if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) return;
-    const anyLive = D.groupFixtures.concat(D.knockoutFixtures).some((f) => f.live);
-    liveTimer = setTimeout(() => refreshLive(false), anyLive ? 60000 : 5 * 60000);
-  }
-
   async function refreshLive(manual) {
     if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) { setStatus("Showing saved results — edit data.js to update", "muted"); if (refreshBtn) refreshBtn.style.display = "none"; return; }
     setStatus("Fetching latest results…", "loading");
@@ -702,7 +692,6 @@
     } else {
       setStatus("Offline — showing saved data" + (manual ? " (retry failed)" : ""), "warn");
     }
-    scheduleLive();
   }
   if (refreshBtn) refreshBtn.addEventListener("click", () => refreshLive(true));
 
