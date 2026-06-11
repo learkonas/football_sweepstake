@@ -69,7 +69,10 @@ table.board td:nth-child(2) { text-align: left; font-weight: 600; }
 table.board td.rank { color: var(--muted); }
 table.board tr:first-child td.pts { color: var(--gold); }
 td.pts, .pts { font-weight: 800; color: var(--accent); font-size: 1.05rem; }
-.pchip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem; vertical-align: middle; }
+.pchip { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 0.5rem; vertical-align: middle; flex: 0 0 auto; }
+/* Player name cell: always tall enough for two lines so every row matches the
+   height of names that wrap, even when the name fits on one line. */
+table.board td.pname .pname-box { display: flex; align-items: center; min-height: 2.5em; line-height: 1.25; }
 .rules { color: var(--muted); font-size: 0.85rem; text-align: center; margin-top: 1rem; }
 .rules b { color: var(--text); }
 table.board tr.leader td { background: rgba(184,134,11,0.08); }

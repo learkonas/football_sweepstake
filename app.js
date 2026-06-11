@@ -206,7 +206,7 @@
       const rank = MEDALS[i] ? `<span class="medal">${MEDALS[i]}</span>` : i + 1;
       return `<tr class="${p === ME ? "me" : ""} ${i === 0 ? "leader" : ""}">
         <td class="rank">${rank}</td>
-        <td><span class="pchip" style="background:${colorFor(p)}"></span>${esc(p)}</td>
+        <td class="pname"><span class="pname-box"><span class="pchip" style="background:${colorFor(p)}"></span><span>${esc(p)}</span></span></td>
         <td class="pts">${s.pts}</td>
         <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
         <td>${s.alive}/${D.players[p].length}</td>
