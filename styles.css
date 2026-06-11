@@ -7,7 +7,6 @@
   --muted: #7a7568;
   --accent: #1a6b4a;
   --gold: #b8860b;
-  --live: #c1121f;
 }
 * { box-sizing: border-box; }
 body {
@@ -105,14 +104,9 @@ table.board tr.leader.me td { background: linear-gradient(90deg, rgba(184,134,11
 .mc-row.mine { background: rgba(184,134,11,0.07); border-radius: 6px; }
 .mc-row.mine.today { background: linear-gradient(90deg, rgba(184,134,11,0.10), rgba(26,107,74,0.07)); }
 .mc-empty { color: var(--muted); font-size: 0.85rem; margin: 0.3rem 0; }
-/* live (in-play) match: date + time in bold, running score and clock in live red */
-.mc-row.live { background: rgba(193,18,31,0.06); border-radius: 6px; }
+/* live (in-play) match: date + time in bold */
 .mc-row.live .mc-when { font-weight: 700; color: var(--text); }
 .mc-row.live .mc-when small { font-weight: 700; opacity: 1; }
-.mc-row.live .mc-sc { color: var(--live); }
-.mc-live { color: var(--live); font-weight: 700; font-size: 0.62rem; letter-spacing: 0.04em; text-transform: uppercase; }
-.mc-live::before { content: "\25CF"; margin-right: 0.25rem; animation: livePulse 1.4s ease-in-out infinite; }
-@keyframes livePulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 .mc-side .bdg, .mc-sc .bdg { color: var(--gold); font-size: 0.6rem; margin-left: 1px; }
 
 /* grid of cards */
@@ -177,12 +171,9 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .fx .away { text-align: left; }
 .fx .score { font-weight: 700; min-width: 38px; text-align: center; color: var(--muted); }
 .fx.done .score { color: var(--text); }
-/* live (in-play) fixture: bold the date + time, running score and clock in live red */
-.fx.live { background: rgba(193,18,31,0.07); }
+/* live (in-play) fixture: date + time in bold */
 .fx.live .date { font-weight: 700; color: var(--text); }
 .fx.live .date small { font-weight: 700; opacity: 1; }
-.fx.live .score { color: var(--live); }
-.fx-live { display: block; font-size: 0.6rem; color: var(--live); font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .decided { display: block; font-size: 0.6rem; color: var(--gold); font-weight: 600; }
 
 /* teams + owners */
