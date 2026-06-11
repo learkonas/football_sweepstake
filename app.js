@@ -36,7 +36,12 @@
   const isEliminated = (t) => eliminated.has(t);
 
   // ---- scoring ----
-  // Returns { winner, loser, draw, homePts, awayPts } for a played fixture.
+  // A fixture contributes to the sweepstake points the moment it has a score:
+  // confirmed (played) results and live in-play scores alike. Live points are
+  // provisional and swing with the running score until the match is confirmed.
+  const counts = (f) => f.played || f.live;
+
+  // Returns { winner, loser, draw, homePts, awayPts } for a scored fixture.
   function matchResult(f, knockout) {
     const hs = f.homeScore, as = f.awayScore;
     if (knockout) {
@@ -93,7 +98,7 @@
     }
 
     D.groupFixtures.forEach((f) => {
-      if (!f.played) return;
+      if (!counts(f)) return;
       const r = matchResult(f, false);
       award(f.home, r.homePts, r.kind[0]);
       award(f.away, r.awayPts, r.kind[1]);
@@ -101,7 +106,7 @@
       addGoals(f.away, f.awayScore, f.homeScore);
     });
     D.knockoutFixtures.forEach((f) => {
-      if (!f.played || f.home === "TBD" || f.away === "TBD") return;
+      if (!counts(f) || f.home === "TBD" || f.away === "TBD") return;
       const r = matchResult(f, true);
       award(f.home, r.homePts, r.kind[0]);
       award(f.away, r.awayPts, r.kind[1]);
@@ -127,13 +132,13 @@
     }
 
     D.groupFixtures.forEach((f) => {
-      if (!f.played) return;
+      if (!counts(f)) return;
       const r = matchResult(f, false);
       award(f.home, r.homePts, r.kind[0]);
       award(f.away, r.awayPts, r.kind[1]);
     });
     D.knockoutFixtures.forEach((f) => {
-      if (!f.played || f.home === "TBD" || f.away === "TBD") return;
+      if (!counts(f) || f.home === "TBD" || f.away === "TBD") return;
       const r = matchResult(f, true);
       award(f.home, r.homePts, r.kind[0]);
       award(f.away, r.awayPts, r.kind[1]);
