@@ -251,7 +251,13 @@
   // Once results are fetched a fixture carries its ESPN game id; this stamps it
   // onto the row so a click can open that match on ESPN. No-op (and invisible)
   // until live data has matched the fixture.
-  function espnAttr(f) { return f.espnId ? ` data-espn="${esc(f.espnId)}"` : ""; }
+  function espnAttr(f) {
+    if (!f.espnId) return "";
+    // Attribute context: also escape quotes so a stray quote in the (remote)
+    // id can't break out of data-espn="…" and inject extra attributes.
+    const v = String(f.espnId).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    return ` data-espn="${v}"`;
+  }
 
   // Compact match row for the leaderboard's match centre. Resolves knockout
   // teams via the projector; group teams are already known.
