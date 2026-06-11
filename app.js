@@ -26,10 +26,12 @@
 
   const allFixtures = D.groupFixtures.concat(D.knockoutFixtures);
 
-  // A team is eliminated if manually flagged OR it lost a played knockout match.
+  // A team is eliminated if manually flagged OR it lost a knockout match — a
+  // confirmed result, or a live one it's currently behind in (provisional, and
+  // cleared again by recompute if the in-play score swings back).
   const eliminated = new Set(D.config.eliminatedTeams || []);
   D.knockoutFixtures.forEach((f) => {
-    if (!f.played) return;
+    if (!(f.played || f.live)) return;
     const r = matchResult(f, true);
     if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
   });
@@ -635,7 +637,7 @@
     eliminated.clear();
     (D.config.eliminatedTeams || []).forEach((t) => eliminated.add(t));
     D.knockoutFixtures.forEach((f) => {
-      if (!f.played) return;
+      if (!counts(f)) return;
       const r = matchResult(f, true);
       if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
     });
