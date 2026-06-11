@@ -257,8 +257,9 @@
     const sc = (f.played || isLive) ? `${f.homeScore}&ndash;${f.awayScore}` : "v";
     const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Group ${f.group}`;
     const today = f.date === todayStr() ? " today" : "";
+    const liveBadge = isLive ? `<span class="mc-live">${esc(f.liveDetail || "LIVE")}</span>` : "";
     return `<div class="mc-row ${f.played ? "done" : ""} ${isLive ? "live" : ""} ${mine ? "mine" : ""}${today}">
-      <span class="mc-when">${mcWhen(f)}</span>
+      <span class="mc-when">${mcWhen(f)}${liveBadge}</span>
       <span class="mc-tag">${esc(tag)}</span>
       <span class="mc-match">
         <span class="mc-side ${sh.isWin ? "win" : ""}">${sh.label}${ownH}</span>
@@ -396,8 +397,9 @@
       const label = f.decided === "pens" ? "pens" : f.decided === "et" ? "AET" : "";
       if (label) badge = `<span class="decided">${label}</span>`;
     }
+    const liveBadge = isLive ? `<small class="fx-live">${esc(f.liveDetail || "LIVE")}</small>` : "";
     return `<div class="fx ${played ? "done" : ""} ${isLive ? "live" : ""}">
-      <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}</span>
+      <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}${liveBadge}</span>
       <span class="side home">${teamLabel(f.home, false, true)}</span>
       <span class="score">${score}${badge}</span>
       <span class="side away">${teamLabel(f.away)}</span>

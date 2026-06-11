@@ -53,6 +53,7 @@
         shootout: toNum(h.shootoutScore) !== null || toNum(a.shootoutScore) !== null,
         finished: ty.completed === true || ty.state === "post",
         inProgress: ty.state === "in",          // ESPN: pre | in | post
+        detail: String(ty.shortDetail || ty.detail || ""),  // e.g. "45'", "HT"
         statusName: (ty.name || "") + " " + (ty.detail || ""),
         period: (c.status && c.status.period) || 0,
       };
@@ -114,6 +115,7 @@
           // Match underway: show the running score without counting it yet.
           applyResult(f, ev);
           f.live = true;
+          f.liveDetail = ev.detail;
           live++;
         } else {
           f.live = false;
@@ -140,6 +142,7 @@
         // Match underway: show the running score without counting it yet.
         applyResult(gf, ev);
         gf.live = true;
+        gf.liveDetail = ev.detail;
         live++;
       } else {
         gf.live = false;

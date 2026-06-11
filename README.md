@@ -35,9 +35,9 @@ matches**, including the per-team winner flag and penalty-shootout tallies, so
 - The fetch happens **in-browser, once, right after you sign in** (there's no
   background polling and no server/cron) — reload the page to pull again. A
   status line shows the result, and a **Refresh** button re-pulls on demand.
-- **Matches in play show their running score**, with the date and time in bold.
-  The in-progress score is shown but not counted toward standings or points
-  until the match is final.
+- **Matches in play show their running score live**, with the date and time in
+  bold and a live clock marker. The in-progress score is shown but not counted
+  toward standings or points until the match is final.
 - If ESPN is unreachable, it silently falls back to whatever is saved in
   `data.js`.
 - Matching logic is **by team identity, so there's no fixture-id table to
