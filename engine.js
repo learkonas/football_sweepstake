@@ -33,7 +33,11 @@
     D.teams.filter((t) => t.group === g).forEach((t) => {
       rows[t.name] = { team: t.name, P: 0, W: 0, Dr: 0, L: 0, GF: 0, GA: 0, GD: 0, Pts: 0 };
     });
-    const fixtures = D.groupFixtures.filter((f) => f.group === g && f.played);
+    // Confirmed results plus any match currently in play (provisional): a live
+    // scoreline moves the table straight away, mirroring the leaderboard. Guard
+    // against a not-yet-posted live score so NaN can't scramble the sort.
+    const fixtures = D.groupFixtures.filter((f) => f.group === g &&
+      (f.played || (f.live && typeof f.homeScore === "number" && typeof f.awayScore === "number")));
     fixtures.forEach((f) => {
       const h = rows[f.home], a = rows[f.away];
       h.P++; a.P++;
@@ -70,10 +74,11 @@
     const groups12 = "ABCDEFGHIJKL".split("");
     const groupDone = {};
     groups12.forEach((g) => { groupDone[g] = D.groupFixtures.filter((f) => f.group === g).every((f) => f.played); });
-    // Has a group kicked off yet? Until it has at least one result its standings
-    // are just alphabetical, so there's nothing meaningful to project.
+    // Has a group kicked off yet? Until it has at least one result (confirmed or
+    // a live in-play scoreline) its standings are just alphabetical, so there's
+    // nothing meaningful to project.
     const groupStarted = {};
-    groups12.forEach((g) => { groupStarted[g] = D.groupFixtures.some((f) => f.group === g && f.played); });
+    groups12.forEach((g) => { groupStarted[g] = D.groupFixtures.some((f) => f.group === g && (f.played || f.live)); });
 
     // best-8 third-placed teams -> which group's 3rd each winner faces (FIFA
     // Annex C). Projected from the latest standings once every group is under
@@ -88,7 +93,9 @@
       if (alloc) { winnerToThird = {}; window.WC_THIRDS.order.split("").forEach((w, i) => { winnerToThird[w] = alloc[i]; }); }
     }
 
-    const winnerOf = (f) => { if (!f || !f.played) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
+    // Winner of a feeder tie — confirmed or, for a match still in play, the side
+    // currently ahead (provisional, propagated down the bracket like a projection).
+    const winnerOf = (f) => { if (!f || !(f.played || f.live)) return null; if (f.winner) return f.winner; return f.homeScore > f.awayScore ? f.home : f.awayScore > f.homeScore ? f.away : null; };
     const loserOf = (f) => { const w = winnerOf(f); return w ? (w === f.home ? f.away : f.home) : null; };
 
     // Resolve one side of a tie: the real team if known, otherwise a projection

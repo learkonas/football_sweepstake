@@ -39,7 +39,9 @@ matches**, including the per-team winner flag and penalty-shootout tallies, so
   bold and a live clock marker. The in-progress score counts toward sweepstake
   points straight away, so the leaderboard and league table move in real time —
   these live points are provisional and swing with the score until the match is
-  final. (Group standings still settle only on confirmed results.)
+  final. Group standings, the bracket projection (R32 slots and the winners that
+  propagate down it) and the greyed-out eliminated teams all reflect live scores
+  the same way, reverting if the in-play result swings back.
 - If ESPN is unreachable, it silently falls back to whatever is saved in
   `data.js`.
 - Matching logic is **by team identity, so there's no fixture-id table to
