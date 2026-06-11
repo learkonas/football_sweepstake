@@ -36,8 +36,10 @@ matches**, including the per-team winner flag and penalty-shootout tallies, so
   background polling and no server/cron) — reload the page to pull again. A
   status line shows the result, and a **Refresh** button re-pulls on demand.
 - **Matches in play show their running score live**, with the date and time in
-  bold and a live clock marker. The in-progress score is shown but not counted
-  toward standings or points until the match is final.
+  bold and a live clock marker. The in-progress score counts toward sweepstake
+  points straight away, so the leaderboard and league table move in real time —
+  these live points are provisional and swing with the score until the match is
+  final. (Group standings still settle only on confirmed results.)
 - If ESPN is unreachable, it silently falls back to whatever is saved in
   `data.js`.
 - Matching logic is **by team identity, so there's no fixture-id table to
