@@ -248,6 +248,17 @@
       <p class="rules">Every team ranked by sweepstake points: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90. Badges show the owner; eliminated teams are greyed out.</p>`;
   }
 
+  // Once results are fetched a fixture carries its ESPN game id; this stamps it
+  // onto the row so a click can open that match on ESPN. No-op (and invisible)
+  // until live data has matched the fixture.
+  function espnAttr(f) {
+    if (!f.espnId) return "";
+    // Attribute context: also escape quotes so a stray quote in the (remote)
+    // id can't break out of data-espn="…" and inject extra attributes.
+    const v = String(f.espnId).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    return ` data-espn="${v}"`;
+  }
+
   // Compact match row for the leaderboard's match centre. Resolves knockout
   // teams via the projector; group teams are already known.
   function mcRow(f, P) {
@@ -265,7 +276,7 @@
     const tag = ko ? (ROUND_TAG[f.round] || f.round) : `Group ${f.group}`;
     const today = f.date === todayStr() ? " today" : "";
     const liveBadge = isLive ? `<span class="mc-live">${esc(f.liveDetail || "LIVE")}</span>` : "";
-    return `<div class="mc-row ${f.played ? "done" : ""} ${isLive ? "live" : ""} ${mine ? "mine" : ""}${today}">
+    return `<div class="mc-row ${f.played ? "done" : ""} ${isLive ? "live" : ""} ${mine ? "mine" : ""}${today}"${espnAttr(f)}>
       <span class="mc-when">${mcWhen(f)}${liveBadge}</span>
       <span class="mc-tag">${esc(tag)}</span>
       <span class="mc-match">
@@ -405,7 +416,7 @@
       if (label) badge = `<span class="decided">${label}</span>`;
     }
     const liveBadge = isLive ? `<small class="fx-live">${esc(f.liveDetail || "LIVE")}</small>` : "";
-    return `<div class="fx ${played ? "done" : ""} ${isLive ? "live" : ""}">
+    return `<div class="fx ${played ? "done" : ""} ${isLive ? "live" : ""}"${espnAttr(f)}>
       <span class="date">${fmtDate(f.date)}${f.kickoff ? `<small>${fmtTime(f.kickoff)}</small>` : ""}${liveBadge}</span>
       <span class="side home">${teamLabel(f.home, false, true)}</span>
       <span class="score">${score}${badge}</span>
@@ -470,7 +481,7 @@
           return `<div class="ko-line ${s.isWin ? "win" : ""}">${s.label}<span class="ko-s">${s.score}${s.badge}</span></div>`;
         };
         const when = fmtKick(f);
-        return `<div class="ko-tie ${f.played ? "done" : ""} ${mine ? "mine" : ""}">
+        return `<div class="ko-tie ${f.played ? "done" : ""} ${mine ? "mine" : ""}"${espnAttr(f)}>
           ${line(H, "home")}${line(A, "away")}
           ${when ? `<div class="ko-when">${esc(when)}</div>` : ""}
         </div>`;
@@ -536,7 +547,7 @@
         return S.team ? `${S.team} — ${txt}` : txt;
       };
       const data = `data-tround="${esc(ROUND_TITLE[f.round] || f.round)}" data-twhen="${esc(fmtKick(f) || "")}" data-thome="${esc(path(H, "home"))}" data-taway="${esc(path(A, "away"))}"`;
-      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} ${data}>${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
+      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} ${data}${espnAttr(f)}>${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
     };
 
     const boxes = rows.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
@@ -631,6 +642,16 @@
   const content = document.getElementById("content");
   const tabs = document.querySelectorAll(".tab");
   let current = "leaderboard";
+
+  // Clicking a match row opens that game on ESPN in a new tab. Rows carry the
+  // ESPN game id via data-espn (added by espnAttr once live data has matched
+  // the fixture); one delegated listener covers every view's re-rendered rows.
+  content.addEventListener("click", (e) => {
+    const el = e.target.closest("[data-espn]");
+    if (!el || !content.contains(el)) return;
+    const id = el.getAttribute("data-espn");
+    if (id) window.open(`https://www.espn.com/soccer/match/_/gameId/${encodeURIComponent(id)}`, "_blank", "noopener");
+  });
 
   // The eliminated set + ownerOf are computed once at load; recompute on refresh.
   function recompute() {

@@ -99,6 +99,7 @@
         const ev = koBySet[setKey(t.home, t.away)];
         if (!ev || consumed.has(ev.id)) return;
         consumed.add(ev.id);
+        f.espnId = ev.id;   // remember the ESPN game so the row can link out
         if (f.lock) return;
         if (ev.iso) { f.date = ev.date; f.kickoff = ev.iso; }
         f.home = t.home; f.away = t.away;   // lock the resolved teams into the slot
@@ -131,7 +132,9 @@
       if (consumed.has(ev.id) || !ev.home || !ev.away) return;
       if (ev.date && ev.date >= koStart) return; // not a group-window event
       const gf = groupByPair[setKey(canon(ev.home), canon(ev.away))];
-      if (!gf || gf.lock) return;
+      if (!gf) return;
+      gf.espnId = ev.id;   // remember the ESPN game so the row can link out
+      if (gf.lock) return;
       if (ev.iso) { gf.date = ev.date; gf.kickoff = ev.iso; }
       if (ev.finished) {
         applyResult(gf, ev);
