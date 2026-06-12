@@ -202,7 +202,11 @@
   function renderLeaderboard() {
     const stats = playerStats();
     const ranked = PLAYERS.slice().sort((a, b) =>
-      stats[b].pts - stats[a].pts || stats[b].win - stats[a].win || stats[b].alive - stats[a].alive);
+      stats[b].pts - stats[a].pts
+      || (stats[b].gf - stats[b].ga) - (stats[a].gf - stats[a].ga)
+      || stats[b].gf - stats[a].gf
+      || stats[b].win - stats[a].win
+      || stats[b].alive - stats[a].alive);
     const rows = ranked.map((p, i) => {
       const s = stats[p];
       const rank = MEDALS[i] ? `<span class="medal">${MEDALS[i]}</span>` : i + 1;
@@ -210,14 +214,14 @@
         <td class="rank">${rank}</td>
         <td class="pname"><span class="pname-box"><span class="pchip" style="background:${colorFor(p)}"></span><span>${esc(p)}</span></span></td>
         <td class="pts">${s.pts}</td>
-        <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
+        <td>${s.win}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
         <td>${s.alive}/${D.players[p].length}</td>
       </tr>`;
     }).join("");
     return `<table class="board">
       <thead><tr>
         <th>#</th><th>Player</th><th>Pts</th>
-        <th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th>
+        <th title="Wins (no pens)">W</th>
         <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
         <th title="Teams still in the tournament">Alive</th>
       </tr></thead><tbody>${rows}</tbody></table>

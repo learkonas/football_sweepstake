@@ -18,15 +18,14 @@ body {
   background: var(--bg);
   color: var(--text);
   line-height: 1.45;
+  /* Prevent iOS long-press from painting a dark selection box anywhere on the page. */
+  -webkit-user-select: none; user-select: none;
 }
 header {
   padding: 1.8rem 1rem 1.4rem;
   text-align: center;
   background: linear-gradient(180deg, #ffffff 0%, var(--bg) 100%);
   border-bottom: 1px solid var(--line);
-  /* The title/tagline/tabs are chrome, not content: stop iOS long-press from
-     selecting them and painting a dark selection box over the header. */
-  -webkit-user-select: none; user-select: none;
 }
 h1 { margin: 0; font-size: 1.9rem; letter-spacing: -0.5px; }
 h1 span { color: var(--accent); }
