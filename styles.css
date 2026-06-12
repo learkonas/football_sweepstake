@@ -407,6 +407,7 @@ table.board tr.me { background: rgba(26,107,74,0.08); }
 table.board tr.me td:nth-child(2)::after { content: " you"; color: var(--accent); font-size: 0.7rem; font-weight: 700; }
 table.board.league tr.mine { background: rgba(26,107,74,0.08); }
 table.board.league td.tname { white-space: nowrap; }
+table.board.league td.tname .tnm { font-size: 0.82rem; }
 .card.player.me { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(26,107,74,0.10); }
 
 @media (prefers-reduced-motion: reduce) {
