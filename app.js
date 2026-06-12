@@ -202,7 +202,11 @@
   function renderLeaderboard() {
     const stats = playerStats();
     const ranked = PLAYERS.slice().sort((a, b) =>
-      stats[b].pts - stats[a].pts || stats[b].win - stats[a].win || stats[b].alive - stats[a].alive);
+      stats[b].pts - stats[a].pts
+      || (stats[b].gf - stats[b].ga) - (stats[a].gf - stats[a].ga)
+      || stats[b].gf - stats[a].gf
+      || stats[b].win - stats[a].win
+      || stats[b].alive - stats[a].alive);
     const rows = ranked.map((p, i) => {
       const s = stats[p];
       const rank = MEDALS[i] ? `<span class="medal">${MEDALS[i]}</span>` : i + 1;
