@@ -97,7 +97,7 @@ window.WC_DATA = {
     {
       "name": "United States",
       "group": "D",
-      "rank": 15
+      "rank": 17
     },
     {
       "name": "Paraguay",
