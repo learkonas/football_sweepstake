@@ -635,12 +635,34 @@
     return g;
   }
 
+  function renderRankings() {
+    const stats = teamStats();
+    const sorted = D.teams.slice().sort((a, b) => {
+      const ra = a.rank != null ? a.rank : 9999;
+      const rb = b.rank != null ? b.rank : 9999;
+      return ra - rb;
+    });
+    const rows = sorted.map((t) => `<tr class="${ownerOf[t.name] === ME ? "mine" : ""}">
+      <td class="rank fifarank">#${t.rank != null ? t.rank : "–"}</td>
+      <td class="tname">${teamLabel(t.name)} <small class="grp">${esc(t.group)}</small></td>
+      <td class="pts">${stats[t.name].pts}</td>
+    </tr>`).join("");
+    return `<table class="board league">
+      <thead><tr>
+        <th title="FIFA world ranking">FIFA</th>
+        <th class="tname">Team</th>
+        <th title="Sweepstake points">Pts</th>
+      </tr></thead><tbody>${rows}</tbody></table>
+      <p class="rules">All ${D.teams.length} tournament teams sorted by FIFA world ranking · Badges show the sweepstake owner · eliminated teams are greyed out</p>`;
+  }
+
   // ---- tabs ----
   const views = {
     leaderboard: renderLeaderboard,
     groups: renderGroups,
     bracket: renderBracket,
     league: renderLeague,
+    rankings: renderRankings,
     players: renderPlayers,
   };
   const content = document.getElementById("content");
