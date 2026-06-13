@@ -124,7 +124,7 @@
   function teamStats() {
     const stats = {};
     D.teams.forEach((t) => {
-      stats[t.name] = { team: t.name, group: t.group, pts: 0, P: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0 };
+      stats[t.name] = { team: t.name, group: t.group, rank: t.rank, pts: 0, P: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0 };
     });
 
     function award(team, pts, kind) {
@@ -237,7 +237,7 @@
       b.pts - a.pts || b.win - a.win || b.penWin - a.penWin || a.P - b.P || a.team.localeCompare(b.team));
     const rows = ranked.map((s, i) => `<tr class="${ownerOf[s.team] === ME ? "mine" : ""}">
       <td class="rank">${i + 1}</td>
-      <td class="tname">${teamLabel(s.team)} <small class="grp">${esc(s.group)}</small></td>
+      <td class="tname">${teamLabel(s.team)} <small class="grp">#${s.rank != null ? s.rank : "–"}</small></td>
       <td>${s.P}</td>
       <td class="pts">${s.pts}</td>
       <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
