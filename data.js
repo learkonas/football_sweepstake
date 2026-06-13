@@ -42,7 +42,7 @@ window.WC_DATA = {
     {
       "name": "South Africa",
       "group": "A",
-      "rank": 60
+      "rank": 61
     },
     {
       "name": "South Korea",
@@ -52,7 +52,7 @@ window.WC_DATA = {
     {
       "name": "Czechia",
       "group": "A",
-      "rank": 40
+      "rank": 43
     },
     {
       "name": "Canada",
@@ -62,7 +62,7 @@ window.WC_DATA = {
     {
       "name": "Bosnia and Herzegovina",
       "group": "B",
-      "rank": 64
+      "rank": 63
     },
     {
       "name": "Qatar",
@@ -102,7 +102,7 @@ window.WC_DATA = {
     {
       "name": "Paraguay",
       "group": "D",
-      "rank": 41
+      "rank": 42
     },
     {
       "name": "Australia",
@@ -187,7 +187,7 @@ window.WC_DATA = {
     {
       "name": "Saudi Arabia",
       "group": "H",
-      "rank": 61
+      "rank": 60
     },
     {
       "name": "Uruguay",
@@ -232,7 +232,7 @@ window.WC_DATA = {
     {
       "name": "Jordan",
       "group": "J",
-      "rank": 63
+      "rank": 64
     },
     {
       "name": "Portugal",
