@@ -378,6 +378,9 @@
   // Desktop bracket: a styled tooltip that follows the cursor over a tie, showing
   // the round, kickoff time, and how each side reaches the match.
   function wireBracketTips() {
+    // Hover tooltip is desktop-only. On touch devices a tap fires `mouseover`
+    // but no reliable `mouseout`, leaving the dark tooltip stuck on screen.
+    if (!window.matchMedia || !window.matchMedia("(hover: hover)").matches) return;
     const wrap = content.querySelector(".bracket2-wrap");
     if (!wrap) return;
     let tip = document.getElementById("bxtip");
@@ -594,7 +597,7 @@
     return arr;
   }
 
-  const PSORT_LABELS = { points: "Points", alpha: "Alphabetical", fifa: "FIFA ranking" };
+  const PSORT_LABELS = { points: "Points", alpha: "Alphabetical", fifa: "Ranking" };
 
   function renderPlayers() {
     const stats = playerStats();
@@ -606,7 +609,7 @@
         || a.localeCompare(b);
     });
     const sortBar = `<div class="psort" role="group" aria-label="Sort each player's teams">
-      <span class="psort-label">Sort teams by</span>
+      <span class="psort-label">Sort</span>
       ${PSORTS.map((k) => `<button type="button" class="psort-btn${playerSort === k ? " active" : ""}" data-sort="${k}" aria-pressed="${playerSort === k ? "true" : "false"}">${PSORT_LABELS[k]}</button>`).join("")}
     </div>`;
     return sortBar + `<div class="grid">` + ranked.map((p) => {
