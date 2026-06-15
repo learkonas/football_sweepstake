@@ -9,9 +9,9 @@ The site is deployed on Vercel — visit the live URL and enter your name
 (Dazzo / Cones / Burty / Bilal / Mr Nas) at the sign-in screen. Once you're in,
 results load automatically.
 
-To run locally, open `worldcup/index.html` directly in a browser. Everything
-works offline except the ESPN results fetch, which falls back silently to the
-seed data in `data.js`.
+To run locally, open `index.html` directly in a browser. Everything works
+offline except the ESPN results fetch, which falls back silently to the seed
+data in `data.js`.
 
 ## Files
 
@@ -33,8 +33,7 @@ matches**, including the per-team winner flag and penalty-shootout tallies, so
 **knockout winners (including shootouts) are detected automatically**.
 
 - The fetch happens **in-browser, once, right after you sign in** (there's no
-  background polling and no server/cron) — reload the page to pull again. A
-  status line shows the result, and a **Refresh** button re-pulls on demand.
+  background polling and no server/cron) — reload the page to pull again.
 - **Matches in play show their running score live**, with the date and time in
   bold and a live clock marker. The in-progress score counts toward sweepstake
   points straight away, so the leaderboard and league table move in real time —
