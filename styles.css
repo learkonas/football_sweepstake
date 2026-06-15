@@ -50,17 +50,6 @@ h1 span { color: var(--accent); }
   box-shadow: 0 1px 3px rgba(0,0,0,0.10), 0 1px 1px rgba(0,0,0,0.04);
 }
 
-.livebar { max-width: 1100px; margin: 0 auto; padding: 0.6rem 1rem 0; display: flex; align-items: center; gap: 0.6rem; justify-content: flex-end; }
-.live-status { font-size: 0.8rem; color: var(--muted); }
-.live-status::before { content: "\25CF"; margin-right: 0.4rem; }
-.live-status.ok { color: var(--accent); }
-.live-status.ok::before { color: var(--accent); }
-.live-status.loading::before { color: var(--gold); }
-.live-status.warn { color: var(--gold); }
-.live-status.muted::before { color: var(--muted); }
-.live-refresh { background: var(--panel); color: var(--text); border: 1px solid var(--line); border-radius: 7px; padding: 0.3rem 0.7rem; font-size: 0.8rem; cursor: pointer; }
-.live-refresh:hover { border-color: var(--accent); }
-
 main { max-width: 1100px; margin: 0 auto; padding: 0.8rem 1rem 3rem; }
 
 /* leaderboard */
@@ -399,13 +388,7 @@ body.locked { overflow: hidden; }
 
 .confetti { position: fixed; inset: 0; z-index: 1001; pointer-events: none; }
 
-/* logged-in chip + "me" highlights */
-.livebar-spacer { flex: 1; }
-.whoami { display: none; align-items: center; gap: 0.4rem; font-size: 0.82rem; color: var(--muted); cursor: pointer; }
-.whoami.show { display: inline-flex; }
-.whoami b { color: var(--text); }
-.whoami .switch { color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 0.35rem; font-size: 0.72rem; }
-.whoami:hover .switch { border-color: var(--accent); color: var(--text); }
+/* "me" highlights for the signed-in player's rows */
 table.board tr.me { background: rgba(26,107,74,0.08); }
 table.board tr.me td:nth-child(2)::after { content: " you"; color: var(--accent); font-size: 0.7rem; font-weight: 700; }
 table.board.league tr.mine { background: rgba(26,107,74,0.08); }
@@ -434,7 +417,6 @@ table.board.league td.tname .tnm { font-size: 0.82rem; }
   table.board td.pname, table.board th:nth-child(2) { padding-left: 0.4rem; padding-right: 0.5rem; }
   table.board td.pname .pchip { margin-right: 0.4rem; }
   td.pts, .pts { font-size: 1rem; }
-  .livebar { padding: 0.6rem 0.75rem 0; }
   /* tab bar becomes a swipeable strip instead of wrapping */
   .tabs {
     display: flex; width: 100%; overflow-x: auto;

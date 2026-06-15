@@ -74,6 +74,21 @@
     return { winner: null, loser: null, draw: true, homePts: PTS.draw, awayPts: PTS.draw, kind: ["draw", "draw"] };
   }
 
+  // Every scored contribution across the tournament: both sides of every fixture
+  // that counts (confirmed or live), group and knockout alike. `fn` is called with
+  // the team, its points, the result kind, and its goals for/against from the
+  // 90/ET scoreline. Shared by the player leaderboard and the team league table.
+  function eachContribution(fn) {
+    const visit = (fixtures, knockout) => fixtures.forEach((f) => {
+      if (!counts(f) || f.home === "TBD" || f.away === "TBD") return;
+      const r = matchResult(f, knockout);
+      fn(f.home, r.homePts, r.kind[0], f.homeScore, f.awayScore);
+      fn(f.away, r.awayPts, r.kind[1], f.awayScore, f.homeScore);
+    });
+    visit(D.groupFixtures, false);
+    visit(D.knockoutFixtures, true);
+  }
+
   // ---- player stats ----
   function playerStats() {
     const stats = {};
@@ -81,39 +96,14 @@
       stats[p] = { pts: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0, alive: 0, gf: 0, ga: 0, teamPts: {} };
       D.players[p].forEach((t) => { stats[p].teamPts[t] = 0; if (!isEliminated(t)) stats[p].alive++; });
     });
-
-    function award(team, pts, kind) {
+    // Points + result tallies go to a team's owner; goals (from the 90/ET
+    // scoreline, so shootouts don't count) feed the player goal-difference tiebreak.
+    eachContribution((team, pts, kind, gf, ga) => {
       const p = ownerOf[team];
       if (!p) return;
-      stats[p].pts += pts;
-      stats[p].teamPts[team] += pts;
-      stats[p][kind]++;
-    }
-
-    // Goals for/against go to a team's owner from the 90/ET scoreline (penalty
-    // shootouts don't count as goals), feeding the player goal-difference tiebreak.
-    function addGoals(team, gf, ga) {
-      const p = ownerOf[team];
-      if (!p || typeof gf !== "number" || typeof ga !== "number") return;
-      stats[p].gf += gf;
-      stats[p].ga += ga;
-    }
-
-    D.groupFixtures.forEach((f) => {
-      if (!counts(f)) return;
-      const r = matchResult(f, false);
-      award(f.home, r.homePts, r.kind[0]);
-      award(f.away, r.awayPts, r.kind[1]);
-      addGoals(f.home, f.homeScore, f.awayScore);
-      addGoals(f.away, f.awayScore, f.homeScore);
-    });
-    D.knockoutFixtures.forEach((f) => {
-      if (!counts(f) || f.home === "TBD" || f.away === "TBD") return;
-      const r = matchResult(f, true);
-      award(f.home, r.homePts, r.kind[0]);
-      award(f.away, r.awayPts, r.kind[1]);
-      addGoals(f.home, f.homeScore, f.awayScore);
-      addGoals(f.away, f.awayScore, f.homeScore);
+      const s = stats[p];
+      s.pts += pts; s.teamPts[team] += pts; s[kind]++;
+      if (typeof gf === "number" && typeof ga === "number") { s.gf += gf; s.ga += ga; }
     });
     return stats;
   }
@@ -126,24 +116,10 @@
     D.teams.forEach((t) => {
       stats[t.name] = { team: t.name, group: t.group, pts: 0, P: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0 };
     });
-
-    function award(team, pts, kind) {
+    eachContribution((team, pts, kind) => {
       const s = stats[team];
       if (!s) return;
       s.pts += pts; s.P++; s[kind]++;
-    }
-
-    D.groupFixtures.forEach((f) => {
-      if (!counts(f)) return;
-      const r = matchResult(f, false);
-      award(f.home, r.homePts, r.kind[0]);
-      award(f.away, r.awayPts, r.kind[1]);
-    });
-    D.knockoutFixtures.forEach((f) => {
-      if (!counts(f) || f.home === "TBD" || f.away === "TBD") return;
-      const r = matchResult(f, true);
-      award(f.home, r.homePts, r.kind[0]);
-      award(f.away, r.awayPts, r.kind[1]);
     });
     return stats;
   }
@@ -199,6 +175,14 @@
 
   // ---- renderers ----
   const MEDALS = ["🥇", "🥈", "🥉"];
+
+  // Fragments the leaderboard and league tables share: the scoring breakdown
+  // line in each footer, and the win / shootout-win / draw / loss columns
+  // (header cells + a row's data cells).
+  const SCORING_BREAKDOWN = `<b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90`;
+  const WPDL_HEADERS = `<th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th><th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>`;
+  const wpdlCells = (s) => `<td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>`;
+
   function renderLeaderboard() {
     const stats = playerStats();
     const ranked = PLAYERS.slice().sort((a, b) =>
@@ -214,18 +198,17 @@
         <td class="rank">${rank}</td>
         <td class="pname"><span class="pname-box"><span class="pchip" style="background:${colorFor(p)}"></span><span>${esc(p)}</span></span></td>
         <td class="pts">${s.pts}</td>
-        <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
+        ${wpdlCells(s)}
         <td>${s.alive}/${D.players[p].length}</td>
       </tr>`;
     }).join("");
     return `<table class="board">
       <thead><tr>
         <th>#</th><th>Player</th><th>Pts</th>
-        <th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th>
-        <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
+        ${WPDL_HEADERS}
         <th title="Teams still in the tournament">Alive</th>
       </tr></thead><tbody>${rows}</tbody></table>
-      <p class="rules">Scoring: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90.</p>
+      <p class="rules">Scoring: ${SCORING_BREAKDOWN}.</p>
       ${renderMatchCentre()}`;
   }
 
@@ -240,16 +223,15 @@
       <td class="tname">${teamLabel(s.team)} <small class="grp">${esc(s.group)}</small></td>
       <td>${s.P}</td>
       <td class="pts">${s.pts}</td>
-      <td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>
+      ${wpdlCells(s)}
     </tr>`).join("");
     return `<table class="board league">
       <thead><tr>
         <th>#</th><th class="tname">Team</th>
         <th title="Matches played">P</th><th>Pts</th>
-        <th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th>
-        <th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>
+        ${WPDL_HEADERS}
       </tr></thead><tbody>${rows}</tbody></table>
-      <p class="rules">Every team ranked by sweepstake points: <b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90. Badges show the owner; eliminated teams are greyed out.</p>`;
+      <p class="rules">Every team ranked by sweepstake points: ${SCORING_BREAKDOWN}. Badges show the owner; eliminated teams are greyed out.</p>`;
   }
 
   // Once results are fetched a fixture carries its ESPN game id; this stamps it
@@ -730,26 +712,14 @@
   });
 
   // ---- live results ----
-  const statusEl = document.getElementById("live-status");
-  const refreshBtn = document.getElementById("live-refresh");
-  function setStatus(text, cls) { if (statusEl) { statusEl.textContent = text; statusEl.className = "live-status " + (cls || ""); } }
-
-  async function refreshLive(manual) {
-    if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) { setStatus("Showing saved results — edit data.js to update", "muted"); if (refreshBtn) refreshBtn.style.display = "none"; return; }
-    setStatus("Fetching latest results…", "loading");
+  // Pull the latest results from ESPN (when enabled) and re-render in place.
+  // Runs once after sign-in; reload the page to pull again. On any failure it
+  // falls back silently to the seed data already loaded from data.js.
+  async function refreshLive() {
+    if (!window.WC_LIVE || !window.WC_LIVE.enabled(D)) return;
     const r = await window.WC_LIVE.fetchAndMerge(D);
-    if (r.ok) {
-      recompute();
-      show(current);
-      const t = r.time.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      setStatus(`Live · ${r.finished} results in · updated ${t}`, "ok");
-    } else if (r.skipped) {
-      setStatus("Manual mode — edit data.js", "muted");
-    } else {
-      setStatus("Offline — showing saved data" + (manual ? " (retry failed)" : ""), "warn");
-    }
+    if (r.ok) { recompute(); show(current); }
   }
-  if (refreshBtn) refreshBtn.addEventListener("click", () => refreshLive(true));
 
   // ---- gate / login ----
   // Nothing renders and NO API call happens until a valid player signs in.
@@ -761,7 +731,7 @@
   function start() {
     if (started) return; started = true;
     show(views[location.hash.slice(1)] ? location.hash.slice(1) : "leaderboard");
-    refreshLive(false); // <-- the API is called once, when the user signs in
+    refreshLive(); // <-- the API is called once, when the user signs in
   }
 
   const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
