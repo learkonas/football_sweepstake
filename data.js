@@ -1239,7 +1239,7 @@ window.WC_DATA = {
       "gameNo": 3,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-06-30",
+      "date": "2026-06-29",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
@@ -1290,7 +1290,7 @@ window.WC_DATA = {
       "gameNo": 6,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-01",
+      "date": "2026-06-30",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
@@ -1341,7 +1341,7 @@ window.WC_DATA = {
       "gameNo": 9,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-02",
+      "date": "2026-07-01",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
@@ -1409,7 +1409,7 @@ window.WC_DATA = {
       "gameNo": 13,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-03",
+      "date": "2026-07-02",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
@@ -1460,7 +1460,7 @@ window.WC_DATA = {
       "gameNo": 16,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-04",
+      "date": "2026-07-03",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
@@ -1483,10 +1483,10 @@ window.WC_DATA = {
       "decided": null,
       "winner": null,
       "played": false,
-      "feedHome": "R32-1",
-      "feedAway": "R32-3",
-      "srcHome": "Winner R32-1",
-      "srcAway": "Winner R32-3"
+      "feedHome": "R32-4",
+      "feedAway": "R32-7",
+      "srcHome": "Winner R32-4",
+      "srcAway": "Winner R32-7"
     },
     {
       "id": "R16-2",
@@ -1500,10 +1500,10 @@ window.WC_DATA = {
       "decided": null,
       "winner": null,
       "played": false,
-      "feedHome": "R32-2",
-      "feedAway": "R32-5",
-      "srcHome": "Winner R32-2",
-      "srcAway": "Winner R32-5"
+      "feedHome": "R32-1",
+      "feedAway": "R32-3",
+      "srcHome": "Winner R32-1",
+      "srcAway": "Winner R32-3"
     },
     {
       "id": "R16-3",
@@ -1517,10 +1517,10 @@ window.WC_DATA = {
       "decided": null,
       "winner": null,
       "played": false,
-      "feedHome": "R32-4",
-      "feedAway": "R32-6",
-      "srcHome": "Winner R32-4",
-      "srcAway": "Winner R32-6"
+      "feedHome": "R32-2",
+      "feedAway": "R32-5",
+      "srcHome": "Winner R32-2",
+      "srcAway": "Winner R32-5"
     },
     {
       "id": "R16-4",
@@ -1528,16 +1528,16 @@ window.WC_DATA = {
       "gameNo": 4,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-06",
+      "date": "2026-07-05",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
       "winner": null,
       "played": false,
-      "feedHome": "R32-7",
-      "feedAway": "R32-8",
-      "srcHome": "Winner R32-7",
-      "srcAway": "Winner R32-8"
+      "feedHome": "R32-6",
+      "feedAway": "R32-10",
+      "srcHome": "Winner R32-6",
+      "srcAway": "Winner R32-10"
     },
     {
       "id": "R16-5",
@@ -1562,16 +1562,16 @@ window.WC_DATA = {
       "gameNo": 6,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-07",
+      "date": "2026-07-06",
       "homeScore": null,
       "awayScore": null,
       "decided": null,
       "winner": null,
       "played": false,
       "feedHome": "R32-9",
-      "feedAway": "R32-10",
+      "feedAway": "R32-8",
       "srcHome": "Winner R32-9",
-      "srcAway": "Winner R32-10"
+      "srcAway": "Winner R32-8"
     },
     {
       "id": "R16-7",
@@ -1585,10 +1585,10 @@ window.WC_DATA = {
       "decided": null,
       "winner": null,
       "played": false,
-      "feedHome": "R32-13",
-      "feedAway": "R32-15",
-      "srcHome": "Winner R32-13",
-      "srcAway": "Winner R32-15"
+      "feedHome": "R32-15",
+      "feedAway": "R32-14",
+      "srcHome": "Winner R32-15",
+      "srcAway": "Winner R32-14"
     },
     {
       "id": "R16-8",
@@ -1602,9 +1602,9 @@ window.WC_DATA = {
       "decided": null,
       "winner": null,
       "played": false,
-      "feedHome": "R32-14",
+      "feedHome": "R32-13",
       "feedAway": "R32-16",
-      "srcHome": "Winner R32-14",
+      "srcHome": "Winner R32-13",
       "srcAway": "Winner R32-16"
     },
     {
@@ -1664,7 +1664,7 @@ window.WC_DATA = {
       "gameNo": 4,
       "home": "TBD",
       "away": "TBD",
-      "date": "2026-07-12",
+      "date": "2026-07-11",
       "homeScore": null,
       "awayScore": null,
       "decided": null,

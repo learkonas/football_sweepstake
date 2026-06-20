@@ -5,10 +5,10 @@
 (function () {
   "use strict";
 
-  // FIFA tiebreaker for teams level on points, GD and goals: a mini-league of
-  // the matches played between just those teams (h2h points, then GD, then
-  // goals). Disciplinary/lots aren't in the data, so a final alphabetical
-  // fallback stands in for them.
+  // FIFA 2026 tiebreaker order within a cluster of teams equal on points:
+  // 1. H2H points, 2. H2H GD, 3. H2H GF, 4. overall GD, 5. overall GF,
+  // 6. alphabetical (proxy for disciplinary/lots which aren't in the data).
+  // The cluster is sorted in-place. Returns true if any order changed.
   function sortHeadToHead(cluster, fixtures) {
     const names = new Set(cluster.map((r) => r.team));
     const mini = {};
@@ -24,7 +24,8 @@
     });
     cluster.sort((x, y) => {
       const mx = mini[x.team], my = mini[y.team];
-      return my.pts - mx.pts || my.gd - mx.gd || my.gf - mx.gf || x.team.localeCompare(y.team);
+      return my.pts - mx.pts || my.gd - mx.gd || my.gf - mx.gf ||
+        y.GD - x.GD || y.GF - x.GF || x.team.localeCompare(y.team);
     });
   }
 
@@ -47,13 +48,16 @@
       else if (f.awayScore > f.homeScore) { a.W++; h.L++; a.Pts += 3; }
       else { h.Dr++; a.Dr++; h.Pts++; a.Pts++; }
     });
+    // Primary sort: points only. H2H is the first tiebreaker (FIFA 2026 rules),
+    // so overall GD/GF must not be applied before H2H within equal-points clusters.
     const arr = Object.values(rows).map((r) => { r.GD = r.GF - r.GA; return r; })
-      .sort((x, y) => y.Pts - x.Pts || y.GD - x.GD || y.GF - x.GF);
-    // break ties within equal (Pts,GD,GF) clusters by head-to-head
+      .sort((x, y) => y.Pts - x.Pts);
+    // Within each equal-points cluster apply H2H (which falls through to overall
+    // GD/GF/alphabetical for any remaining ties inside that cluster).
     const out = [];
     for (let i = 0; i < arr.length;) {
       let j = i + 1;
-      while (j < arr.length && arr[j].Pts === arr[i].Pts && arr[j].GD === arr[i].GD && arr[j].GF === arr[i].GF) j++;
+      while (j < arr.length && arr[j].Pts === arr[i].Pts) j++;
       const cluster = arr.slice(i, j);
       if (cluster.length > 1) sortHeadToHead(cluster, fixtures);
       cluster.forEach((r) => out.push(r));
