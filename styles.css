@@ -239,8 +239,10 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 }
 .bxtip.show { opacity: 1; transform: none; }
 /* Touch devices can't reliably clear hover state, which would leave this dark
-   tooltip stuck on screen — never display it where there's no true hover. */
-@media (hover: none) { .bxtip { display: none !important; } }
+   tooltip stuck on screen — never display it where there's no true hover. A
+   coarse pointer (finger) is the giveaway even on devices like iPad Safari that
+   misreport `(hover: hover)`, so hide it there too. */
+@media (hover: none), (pointer: coarse) { .bxtip { display: none !important; } }
 .bxtip-h { font-weight: 700; display: flex; flex-direction: column; gap: 0.1rem; margin-bottom: 0.35rem; }
 .bxtip-when { font-weight: 500; color: #d8c27a; font-size: 0.72rem; }
 .bxtip-paths { display: flex; flex-direction: column; gap: 0.2rem; color: #d6d6d6; }

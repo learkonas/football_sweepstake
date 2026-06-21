@@ -362,12 +362,19 @@
   function wireBracketTips() {
     // Hover tooltip is desktop-only. On touch devices a tap fires `mouseover`
     // but no reliable `mouseout`, leaving the dark tooltip stuck on screen.
-    if (!window.matchMedia || !window.matchMedia("(hover: hover)").matches) return;
+    // Require a fine pointer (a real mouse) as well as hover capability: iPad
+    // Safari and other touch devices report `(hover: hover)` yet have no true
+    // hover, which is exactly what pins the dark box to the corner.
+    if (!window.matchMedia || !window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
     const wrap = content.querySelector(".bracket2-wrap");
     if (!wrap) return;
     let tip = document.getElementById("bxtip");
     if (!tip) { tip = document.createElement("div"); tip.id = "bxtip"; tip.className = "bxtip"; document.body.appendChild(tip); }
     let active = null;
+    const hide = () => { active = null; tip.classList.remove("show"); };
+    // Safety net for hybrid devices (mouse + touchscreen) that legitimately pass
+    // the check above: any touch immediately clears a tooltip so it can't stick.
+    window.addEventListener("touchstart", hide, { passive: true });
     const place = (e) => {
       const pad = 14, r = tip.getBoundingClientRect();
       let x = e.clientX + pad, y = e.clientY + pad;
@@ -391,7 +398,7 @@
     });
     wrap.addEventListener("mousemove", (e) => { if (active) place(e); });
     wrap.addEventListener("mouseout", (e) => {
-      if (active && !active.contains(e.relatedTarget)) { active = null; tip.classList.remove("show"); }
+      if (active && !active.contains(e.relatedTarget)) hide();
     });
   }
 
