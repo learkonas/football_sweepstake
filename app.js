@@ -193,18 +193,20 @@
       || stats[b].alive - stats[a].alive);
     const rows = ranked.map((p, i) => {
       const s = stats[p];
+      const played = s.win + s.penWin + s.draw + s.loss + s.penLoss;
       const rank = MEDALS[i] ? `<span class="medal">${MEDALS[i]}</span>` : i + 1;
       return `<tr class="${p === ME ? "me" : ""} ${i === 0 ? "leader" : ""}">
         <td class="rank">${rank}</td>
         <td class="pname"><span class="pname-box"><span class="pchip" style="background:${colorFor(p)}"></span><span>${esc(p)}</span></span></td>
         <td class="pts">${s.pts}</td>
+        <td>${played}</td>
         ${wpdlCells(s)}
         <td>${s.alive}/${D.players[p].length}</td>
       </tr>`;
     }).join("");
     return `<table class="board">
       <thead><tr>
-        <th>#</th><th>Player</th><th>Pts</th>
+        <th></th><th>Player</th><th>Pts</th><th title="Games played">P</th>
         ${WPDL_HEADERS}
         <th title="Teams still in the tournament">Alive</th>
       </tr></thead><tbody>${rows}</tbody></table>
