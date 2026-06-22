@@ -73,7 +73,6 @@ table.board td.pname .pname-box { display: flex; align-items: center; min-height
 table.board tr.leader { background: rgba(184,134,11,0.08); }
 table.board tr.leader td.pts { color: var(--gold); }
 table.board tr.leader.me { background: linear-gradient(90deg, rgba(184,134,11,0.10), rgba(26,107,74,0.08)); }
-.medal { font-size: 1.05rem; line-height: 1; }
 
 /* match centre (leaderboard) */
 .matchcentre { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(400px, 100%), 1fr)); gap: 1rem; margin-top: 1.4rem; }
