@@ -19,22 +19,22 @@ body {
   color: var(--text);
   line-height: 1.45;
   /* Prevent iOS long-press from painting a dark selection box anywhere on the
-     page. `user-select: none` alone doesn't always suppress it — the
-     long-press callout still paints a highlight, so
-     `-webkit-touch-callout: none` is also required. */
+     page. `user-select: none` alone does NOT stop this on iOS Safari — the
+     long-press callout still paints a translucent grey/black rectangle — so
+     `-webkit-touch-callout: none` is the part that actually kills it. */
   -webkit-user-select: none; user-select: none;
   -webkit-touch-callout: none;
 }
-/* Belt-and-suspenders: even if a selection is triggered, paint no visible
+/* Belt-and-suspenders: even if a selection is somehow created, don't paint a
    highlight over it. */
 ::selection { background: transparent; }
 ::-moz-selection { background: transparent; }
-/* The login field must still accept text input and selection. */
+/* The login field must still accept typing and normal text selection. */
 input, textarea {
   -webkit-user-select: text; user-select: text;
   -webkit-touch-callout: default;
 }
-input::selection, textarea::selection { background: rgba(26, 107, 74, 0.2); }
+input::selection, textarea::selection { background: Highlight; background: highlight; }
 header {
   padding: 1.8rem 1rem 1.4rem;
   text-align: center;
