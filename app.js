@@ -157,7 +157,7 @@
 
   // Badge initial overrides for players whose displayed letter differs from
   // the first character of their name.
-  const OWNER_INITIAL = { "Mr Nas": "L" };
+  const OWNER_INITIAL = { "Mr Nas": "L", "Burty": "A" };
   function ownerTag(team) {
     const p = ownerOf[team];
     if (!p) return "";
