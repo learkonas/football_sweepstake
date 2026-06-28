@@ -95,6 +95,40 @@
       f.awayScore = (home === f.home) ? ev.awayScore : ev.homeScore;
     }
 
+    // --- group: match by team pair within the group window ---
+    // Must run before the knockout pass: the bracket projector resolves each
+    // R32 slot from the group standings, so the group results have to be merged
+    // into D first or the projector reads stale (unplayed) standings, can't name
+    // the slot's teams, and the knockout game is never matched. The live API is
+    // fetched once per load from the data.js seed (all groups unplayed), so a
+    // knockout-first order leaves every knockout result permanently unresolved.
+    const groupByPair = {};
+    D.groupFixtures.forEach((f) => { groupByPair[setKey(f.home, f.away)] = f; });
+    events.forEach((ev) => {
+      if (consumed.has(ev.id) || !ev.home || !ev.away) return;
+      if (!inGroupWindow(ev)) return; // not a group-window event
+      const gf = groupByPair[setKey(canon(ev.home), canon(ev.away))];
+      if (!gf) return;
+      gf.espnId = ev.id;   // remember the ESPN game so the row can link out
+      if (gf.lock) return;
+      if (ev.iso) { gf.date = ev.date; gf.kickoff = ev.iso; }
+      if (ev.finished) {
+        applyResult(gf, ev);
+        gf.played = true;
+        gf.live = false;
+        finished++;
+      } else if (ev.inProgress) {
+        // Match underway: show the running score without counting it yet.
+        applyResult(gf, ev);
+        gf.live = true;
+        gf.liveDetail = ev.detail;
+        live++;
+      } else {
+        gf.live = false;
+      }
+      updated++;
+    });
+
     // --- knockout: project each slot to its teams, match the ESPN game between
     //     them. Round by round so later rounds see winners just applied. ---
     const koBySet = {};
@@ -136,34 +170,6 @@
         }
         updated++;
       });
-    });
-
-    // --- group: match by team pair within the group window ---
-    const groupByPair = {};
-    D.groupFixtures.forEach((f) => { groupByPair[setKey(f.home, f.away)] = f; });
-    events.forEach((ev) => {
-      if (consumed.has(ev.id) || !ev.home || !ev.away) return;
-      if (!inGroupWindow(ev)) return; // not a group-window event
-      const gf = groupByPair[setKey(canon(ev.home), canon(ev.away))];
-      if (!gf) return;
-      gf.espnId = ev.id;   // remember the ESPN game so the row can link out
-      if (gf.lock) return;
-      if (ev.iso) { gf.date = ev.date; gf.kickoff = ev.iso; }
-      if (ev.finished) {
-        applyResult(gf, ev);
-        gf.played = true;
-        gf.live = false;
-        finished++;
-      } else if (ev.inProgress) {
-        // Match underway: show the running score without counting it yet.
-        applyResult(gf, ev);
-        gf.live = true;
-        gf.liveDetail = ev.detail;
-        live++;
-      } else {
-        gf.live = false;
-      }
-      updated++;
     });
 
     return { updated, finished, live };
