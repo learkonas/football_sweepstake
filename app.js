@@ -35,6 +35,28 @@
     const r = matchResult(f, true);
     if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
   });
+  // ...and group-stage non-qualifiers: once a group has played all six matches,
+  // the teams that finished outside the qualifying places are out. The top two
+  // of every group go through; of the twelve third-placed teams only the best
+  // eight advance (FIFA ranking), so a third-placed side is only marked out once
+  // those qualifying thirds are settled. Fourth place is always eliminated. The
+  // qualified set is read from the bracket projector — any team the projector
+  // drops into an R32 slot is safe — so this stays in sync with the projection.
+  const elimProj = window.WC_ENGINE.projector(D);
+  const qualified = new Set();
+  D.knockoutFixtures.filter((f) => f.round === "R32").forEach((f) => {
+    const t = elimProj.teams(f);
+    if (t.home) qualified.add(t.home);
+    if (t.away) qualified.add(t.away);
+  });
+  "ABCDEFGHIJKL".split("").forEach((g) => {
+    if (!elimProj.groupDone[g]) return;
+    window.WC_ENGINE.groupStandings(D, g).forEach((row, i) => {
+      if (i < 2) return;                            // top two always qualify
+      if (i === 2 && !elimProj.winnerToThird) return; // best-8 thirds not settled yet
+      if (!qualified.has(row.team)) eliminated.add(row.team);
+    });
+  });
   const isEliminated = (t) => eliminated.has(t);
 
   // ---- scoring ----

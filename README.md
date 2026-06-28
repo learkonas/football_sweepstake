@@ -172,7 +172,21 @@ separate card on the Players tab). The five names and their order come from
   2 SF + 1 third place + 1 final = 32). As each round resolves, ESPN fills in
   the real teams, scores, and how each tie was decided automatically.
 
-## Manually marking a team out
+## How teams are marked out
 
-If you want to grey out a team before its knockout loss is entered (e.g. a side
-eliminated in the group stage), add its name to `config.eliminatedTeams`.
+The **Alive** counts (League tab and Players tab) and the greyed-out styling
+track which teams are still in the tournament. Elimination is detected
+automatically:
+
+- **Knockout losers** — the loser of any played knockout match is auto-greyed-out
+  across the whole site.
+- **Group-stage non-qualifiers** — once a group has played all six of its matches,
+  the teams that finished outside the qualifying places are marked out: the top
+  two of every group go through, and of the twelve third-placed teams only the
+  best eight advance (FIFA ranking). A third-placed team is only marked out once
+  those qualifying thirds are settled (which needs enough groups finished);
+  fourth place is always out. The qualified set is taken straight from the
+  bracket projector, so it stays in step with the Knockout tab.
+
+If you ever need to grey out a team by hand (before its result is entered, or to
+override the automatic logic), add its name to `config.eliminatedTeams`.
