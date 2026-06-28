@@ -73,6 +73,19 @@
     // Earliest knockout date — the boundary between the group and knockout
     // windows. Derived from the data so there's nothing to hand-maintain.
     const koStart = D.knockoutFixtures.reduce((m, f) => (f.date && f.date < m) ? f.date : m, "9999-99-99");
+    // ...but split on a timestamp, not a bare date. On the final group day the
+    // late kickoffs (22:00 ET) roll past midnight UTC onto the first knockout
+    // date, so a date-only test misfiles them as knockout events and drops them
+    // from the group merge — leaving those ties with no kickoff time. No group
+    // game starts as late as midday UTC the day after the last group day, and no
+    // knockout starts before it, so noon UTC on the first knockout date cleanly
+    // separates the two windows.
+    const koBoundaryMs = new Date(koStart + "T12:00:00Z").getTime();
+    const tsOf = (ev) => {
+      const ms = ev.iso ? new Date(ev.iso).getTime() : NaN;
+      return Number.isNaN(ms) ? (ev.date ? new Date(ev.date + "T00:00:00Z").getTime() : 0) : ms;
+    };
+    const inGroupWindow = (ev) => tsOf(ev) < koBoundaryMs;
     const consumed = new Set();
     let updated = 0, finished = 0, live = 0;
 
@@ -86,7 +99,7 @@
     //     them. Round by round so later rounds see winners just applied. ---
     const koBySet = {};
     events.forEach((ev) => {
-      if (!ev.home || !ev.away || (ev.date && ev.date < koStart)) return; // group-window event
+      if (!ev.home || !ev.away || inGroupWindow(ev)) return; // group-window event
       const k = setKey(canon(ev.home), canon(ev.away));
       // A pair meets at most once in a knockout, but keep the latest just in case.
       if (!koBySet[k] || ev.date > koBySet[k].date) koBySet[k] = ev;
@@ -130,7 +143,7 @@
     D.groupFixtures.forEach((f) => { groupByPair[setKey(f.home, f.away)] = f; });
     events.forEach((ev) => {
       if (consumed.has(ev.id) || !ev.home || !ev.away) return;
-      if (ev.date && ev.date >= koStart) return; // not a group-window event
+      if (!inGroupWindow(ev)) return; // not a group-window event
       const gf = groupByPair[setKey(canon(ev.home), canon(ev.away))];
       if (!gf) return;
       gf.espnId = ev.id;   // remember the ESPN game so the row can link out
