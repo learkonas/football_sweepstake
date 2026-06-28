@@ -148,12 +148,15 @@
   function teamStats() {
     const stats = {};
     D.teams.forEach((t) => {
-      stats[t.name] = { team: t.name, group: t.group, pts: 0, P: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0 };
+      stats[t.name] = { team: t.name, group: t.group, pts: 0, P: 0, win: 0, penWin: 0, draw: 0, loss: 0, penLoss: 0, gf: 0, ga: 0 };
     });
-    eachContribution((team, pts, kind) => {
+    // Goals (from the 90/ET scoreline, so shootouts don't count) feed the goal
+    // difference shown in the table and used as the equal-points tiebreak.
+    eachContribution((team, pts, kind, gf, ga) => {
       const s = stats[team];
       if (!s) return;
       s.pts += pts; s.P++; s[kind]++;
+      if (typeof gf === "number" && typeof ga === "number") { s.gf += gf; s.ga += ga; }
     });
     return stats;
   }
@@ -246,25 +249,31 @@
   }
 
   // League: every team ranked by the sweepstake points it has accrued. Ties
-  // break on wins, then shootout wins, then fewest games played, then name.
+  // break on goal difference, then wins, then shootout wins, then fewest games
+  // played, then name.
   function renderLeague() {
     const stats = teamStats();
     const ranked = D.teams.map((t) => stats[t.name]).sort((a, b) =>
-      b.pts - a.pts || b.win - a.win || b.penWin - a.penWin || a.P - b.P || a.team.localeCompare(b.team));
-    const rows = ranked.map((s, i) => `<tr class="${ownerOf[s.team] === ME ? "mine" : ""}">
+      b.pts - a.pts || (b.gf - b.ga) - (a.gf - a.ga) || b.win - a.win || b.penWin - a.penWin || a.P - b.P || a.team.localeCompare(b.team));
+    const rows = ranked.map((s, i) => {
+      const gd = s.gf - s.ga;
+      return `<tr class="${ownerOf[s.team] === ME ? "mine" : ""}">
       <td class="rank">${i + 1}</td>
       <td class="tname">${teamLabel(s.team)} <small class="grp">${esc(s.group)}</small></td>
       <td>${s.P}</td>
       <td class="pts">${s.pts}</td>
       ${wpdlCells(s)}
-    </tr>`).join("");
+      <td>${gd > 0 ? "+" + gd : gd}</td>
+    </tr>`;
+    }).join("");
     return `<table class="board league">
       <thead><tr>
         <th>#</th><th class="tname">Team</th>
         <th title="Matches played">P</th><th>Pts</th>
         ${WPDL_HEADERS}
+        <th title="Goal difference (90/ET goals)">GD</th>
       </tr></thead><tbody>${rows}</tbody></table>
-      <p class="rules">Every team ranked by sweepstake points: ${SCORING_BREAKDOWN}. Badges show the owner; eliminated teams are greyed out.</p>`;
+      <p class="rules">Every team ranked by sweepstake points: ${SCORING_BREAKDOWN}. Teams level on points are split by goal difference. Badges show the owner; eliminated teams are greyed out.</p>`;
   }
 
   // Once results are fetched a fixture carries its ESPN game id; this stamps it
