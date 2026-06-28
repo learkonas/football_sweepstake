@@ -26,16 +26,50 @@
 
   const allFixtures = D.groupFixtures.concat(D.knockoutFixtures);
 
-  // A team is eliminated if manually flagged OR it lost a knockout match — a
-  // confirmed result, or a live one it's currently behind in (provisional, and
-  // cleared again by recompute if the in-play score swings back).
-  const eliminated = new Set(D.config.eliminatedTeams || []);
-  D.knockoutFixtures.forEach((f) => {
-    if (!(f.played || f.live)) return;
-    const r = matchResult(f, true);
-    if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
-  });
+  // Which teams are out of the tournament. Rebuilt from the current data by
+  // rebuildEliminated() — once at load and again after every live merge (see
+  // recompute), so it tracks ESPN results as they arrive.
+  const eliminated = new Set();
   const isEliminated = (t) => eliminated.has(t);
+
+  // A team is eliminated if it's manually flagged, lost a knockout match, or
+  // failed to qualify out of its group once that group has finished.
+  function rebuildEliminated() {
+    eliminated.clear();
+    (D.config.eliminatedTeams || []).forEach((t) => eliminated.add(t));
+
+    // Knockout losers — a confirmed result, or a live one a team is currently
+    // behind in (provisional; cleared again on recompute if the score swings back).
+    D.knockoutFixtures.forEach((f) => {
+      if (!(f.played || f.live)) return;
+      const r = matchResult(f, true);
+      if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
+    });
+
+    // Group-stage non-qualifiers: once a group has played all six matches, the
+    // teams that finished outside the qualifying places are out. The top two of
+    // every group go through; of the twelve third-placed teams only the best
+    // eight advance (FIFA ranking), so a third-placed side is only marked out
+    // once those qualifying thirds are settled. Fourth place is always out. The
+    // qualified set is read from the bracket projector — any team the projector
+    // drops into an R32 slot is safe — so this stays in sync with the projection.
+    const proj = window.WC_ENGINE.projector(D);
+    const qualified = new Set();
+    D.knockoutFixtures.filter((f) => f.round === "R32").forEach((f) => {
+      const t = proj.teams(f);
+      if (t.home) qualified.add(t.home);
+      if (t.away) qualified.add(t.away);
+    });
+    "ABCDEFGHIJKL".split("").forEach((g) => {
+      if (!proj.groupDone[g]) return;
+      window.WC_ENGINE.groupStandings(D, g).forEach((row, i) => {
+        if (i < 2) return;                          // top two always qualify
+        if (i === 2 && !proj.winnerToThird) return; // best-8 thirds not settled yet
+        if (!qualified.has(row.team)) eliminated.add(row.team);
+      });
+    });
+  }
+  rebuildEliminated();
 
   // ---- scoring ----
   // A fixture contributes to the sweepstake points the moment it has a score:
@@ -670,15 +704,10 @@
     if (id) window.open(`https://www.espn.com/soccer/match/_/gameId/${encodeURIComponent(id)}`, "_blank", "noopener");
   });
 
-  // The eliminated set + ownerOf are computed once at load; recompute on refresh.
+  // The eliminated set is computed once at load; rebuild it on every refresh so
+  // it reflects the results just merged from ESPN.
   function recompute() {
-    eliminated.clear();
-    (D.config.eliminatedTeams || []).forEach((t) => eliminated.add(t));
-    D.knockoutFixtures.forEach((f) => {
-      if (!counts(f)) return;
-      const r = matchResult(f, true);
-      if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
-    });
+    rebuildEliminated();
   }
 
   function show(name) {
