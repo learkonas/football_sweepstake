@@ -61,8 +61,8 @@ Per match, each team earns its owner:
 
 - **3 pts** — win (normal or extra time)
 - **2 pts** — win on penalties
-- **1 pt** — lose on penalties
-- **0 pts** — anything else (a draw, or a loss)
+- **1 pt** — draw at 90 (incl. the losing side of a shootout)
+- **0 pts** — loss
 
 These live in `data.js → config.points` and can be changed.
 

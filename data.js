@@ -5,8 +5,7 @@ window.WC_DATA = {
     "points": {
       "win": 3,
       "penWin": 2,
-      "penLoss": 1,
-      "draw": 0,
+      "draw": 1,
       "loss": 0
     },
     "playerOrder": [

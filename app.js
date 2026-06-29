@@ -82,14 +82,14 @@
     const hs = f.homeScore, as = f.awayScore;
     if (knockout) {
       if (f.decided === "pens") {
-        // decided on penalties: winner 2pts, loser 1pt (the only way to earn the
-        // single point — an ordinary draw scores nothing).
+        // level at 90 (and after ET), decided on penalties: winner 2pts, loser
+        // 1pt — the loser drew at 90, so they earn the draw point.
         const winner = f.winner || (hs > as ? f.home : as > hs ? f.away : null);
         const loser = winner ? (winner === f.home ? f.away : f.home) : null;
         return {
           winner, loser, draw: false,
-          homePts: winner === f.home ? PTS.penWin : winner ? PTS.penLoss : 0,
-          awayPts: winner === f.away ? PTS.penWin : winner ? PTS.penLoss : 0,
+          homePts: winner === f.home ? PTS.penWin : winner ? PTS.draw : 0,
+          awayPts: winner === f.away ? PTS.penWin : winner ? PTS.draw : 0,
           kind: winner === f.home ? ["penWin", "penLoss"] : winner === f.away ? ["penLoss", "penWin"] : ["draw", "draw"],
         };
       }
@@ -214,11 +214,11 @@
   // ---- renderers ----
 
   // Fragments the leaderboard and league tables share: the scoring breakdown
-  // line in each footer, and the win / shootout-win / shootout-loss / other
-  // columns (header cells + a row's data cells), grouped by point value.
-  const SCORING_BREAKDOWN = `<b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.penLoss}</b> shootout loss &middot; <b>${PTS.loss}</b> otherwise`;
-  const WPDL_HEADERS = `<th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th><th title="Penalty shootout losses (the only 1-point result)">PL</th><th title="Draws and losses (0 points)">D/L</th>`;
-  const wpdlCells = (s) => `<td>${s.win}</td><td>${s.penWin}</td><td>${s.penLoss}</td><td>${s.draw + s.loss}</td>`;
+  // line in each footer, and the win / shootout-win / draw / loss columns
+  // (header cells + a row's data cells).
+  const SCORING_BREAKDOWN = `<b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw at 90 &middot; <b>${PTS.loss}</b> loss in 90`;
+  const WPDL_HEADERS = `<th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th><th title="Draws at 90 (incl. losing a shootout)">D</th><th title="Losses in 90">L</th>`;
+  const wpdlCells = (s) => `<td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>`;
 
   function renderLeaderboard() {
     const stats = playerStats();
