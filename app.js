@@ -215,8 +215,8 @@
   // Fragments the leaderboard and league tables share: the scoring breakdown
   // line in each footer, and the win / shootout-win / draw / loss columns
   // (header cells + a row's data cells).
-  const SCORING_BREAKDOWN = `<b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90 &middot; <b>${PTS.loss}</b> loss in 90`;
-  const WPDL_HEADERS = `<th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th><th title="Draws after 90 / shootout losses">D</th><th title="Losses in 90">L</th>`;
+  const SCORING_BREAKDOWN = `<b>${PTS.win}</b> win &middot; <b>${PTS.penWin}</b> shootout win &middot; <b>${PTS.draw}</b> draw after 90/ET &middot; <b>${PTS.loss}</b> loss in 90`;
+  const WPDL_HEADERS = `<th title="Wins (no pens)">W</th><th title="Penalty shootout wins">PW</th><th title="Draws (level after 90 in groups, or after extra time — incl. shootout losses)">D</th><th title="Losses in 90">L</th>`;
   const wpdlCells = (s) => `<td>${s.win}</td><td>${s.penWin}</td><td>${s.draw + s.penLoss}</td><td>${s.loss}</td>`;
 
   function renderLeaderboard() {

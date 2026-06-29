@@ -61,7 +61,7 @@ Per match, each team earns its owner:
 
 - **3 pts** — win in normal time / extra time (no penalties)
 - **2 pts** — win on a penalty shootout
-- **1 pt** — draw after 90 minutes (a group draw, or the losing side of a shootout)
+- **1 pt** — draw after 90/ET (a group draw at 90, or the losing side of a shootout — level after extra time)
 - **0 pts** — loss in 90 minutes
 
 These live in `data.js → config.points` and can be changed.
