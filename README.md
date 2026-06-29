@@ -59,10 +59,10 @@ DR, Türkiye, Curaçao.
 
 Per match, each team earns its owner:
 
-- **3 pts** — win in normal time / extra time (no penalties)
-- **2 pts** — win on a penalty shootout
-- **1 pt** — draw after 90/ET (a group draw at 90, or the losing side of a shootout — level after extra time)
-- **0 pts** — loss in 90 minutes
+- **3 pts** — win (normal or extra time)
+- **2 pts** — win on penalties
+- **1 pt** — lose on penalties
+- **0 pts** — anything else (a draw, or a loss)
 
 These live in `data.js → config.points` and can be changed.
 
