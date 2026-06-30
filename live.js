@@ -118,7 +118,9 @@
         gf.live = false;
         finished++;
       } else if (ev.inProgress) {
-        // Match underway: show the running score without counting it yet.
+        // Match underway: store the running score and flag it live. Live points
+        // count provisionally (see app.js `counts`); the `played` flag stays
+        // false until the final whistle so elimination/Alive counts hold off.
         applyResult(gf, ev);
         gf.live = true;
         gf.liveDetail = ev.detail;
@@ -160,7 +162,10 @@
           f.live = false;
           finished++;
         } else if (ev.inProgress) {
-          // Match underway: show the running score without counting it yet.
+          // Match underway: store the running score and flag it live. Live
+          // points count provisionally (see app.js `counts`); `played` stays
+          // false until the final whistle so a team trailing in a live tie
+          // isn't crossed out until the result is real.
           applyResult(f, ev);
           f.live = true;
           f.liveDetail = ev.detail;
