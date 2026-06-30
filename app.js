@@ -38,10 +38,11 @@
     eliminated.clear();
     (D.config.eliminatedTeams || []).forEach((t) => eliminated.add(t));
 
-    // Knockout losers — a confirmed result, or a live one a team is currently
-    // behind in (provisional; cleared again on recompute if the score swings back).
+    // Knockout losers — only once the match is final. A team that's trailing in
+    // a live match is still in the competition until the whistle, so the score
+    // can swing back; don't cross them out on a provisional in-play scoreline.
     D.knockoutFixtures.forEach((f) => {
-      if (!(f.played || f.live)) return;
+      if (!f.played) return;
       const r = matchResult(f, true);
       if (r.loser && r.loser !== "TBD") eliminated.add(r.loser);
     });
