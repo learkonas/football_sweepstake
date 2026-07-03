@@ -505,31 +505,97 @@
     return isSmallScreen() ? renderBracketList(P) : renderBracketCanvas(P);
   }
 
-  // Mobile: a round-by-round stack of tie cards (no horizontal scroll), each
-  // showing its kickoff date + time.
+  // Mobile: a round-by-round stack of tie cards (no horizontal scroll). Ties in
+  // a section are ordered by kickoff time, and each header collapses its ties
+  // so the page fits on one screen. The third-place playoff and the final share
+  // one section because it's the same weekend and only three matches between
+  // them. Open/closed state per section persists in localStorage; without stored
+  // state the earliest section with an unplayed match is expanded and the rest
+  // start collapsed.
+  const KO_OPEN_KEY = "wc_ko_open";
+  const KO_GROUPS = [
+    { key: "R32", title: "Round of 32", rounds: ["R32"] },
+    { key: "R16", title: "Round of 16", rounds: ["R16"] },
+    { key: "QF",  title: "Quarter-finals", rounds: ["QF"] },
+    { key: "SF",  title: "Semi-finals", rounds: ["SF"] },
+    { key: "F",   title: "Final", rounds: ["3P", "F"] },
+  ];
+  const koGroupFixtures = (g) => D.knockoutFixtures
+    .filter((f) => g.rounds.includes(f.round))
+    .slice()
+    .sort((a, b) => whenOf(a) - whenOf(b));
+  function loadKORoundOpen() {
+    const validKeys = new Set(KO_GROUPS.map((g) => g.key));
+    try {
+      const raw = localStorage.getItem(KO_OPEN_KEY);
+      if (raw) {
+        const arr = JSON.parse(raw);
+        if (Array.isArray(arr)) return new Set(arr.filter((k) => validKeys.has(k)));
+      }
+    } catch (_) {}
+    for (const g of KO_GROUPS) {
+      const fx = koGroupFixtures(g);
+      if (fx.length && fx.some((f) => !f.played)) return new Set([g.key]);
+    }
+    return new Set(["F"]);
+  }
+  function saveKORoundOpen(set) {
+    try { localStorage.setItem(KO_OPEN_KEY, JSON.stringify([...set])); } catch (_) {}
+  }
+
   function renderBracketList(P) {
-    const order = ["R32", "R16", "QF", "SF", "3P", "F"];
-    const sections = order.map((r) => {
-      const fx = D.knockoutFixtures.filter((f) => f.round === r);
+    const open = loadKORoundOpen();
+    const sections = KO_GROUPS.map((g) => {
+      const fx = koGroupFixtures(g);
       if (!fx.length) return "";
       const ties = fx.map((f) => {
         const H = P.side(f, "home"), A = P.side(f, "away");
-        const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
         const line = (S, which) => {
           const s = bracketSideHtml(f, S, which, "ko-s", "bdg");
           return `<div class="ko-line ${s.isWin ? "win" : ""}">${s.label}<span class="ko-s">${s.score}${s.badge}</span></div>`;
         };
         const when = fmtKick(f);
-        return `<div class="ko-tie ${f.played ? "done" : ""} ${mine ? "mine" : ""}"${espnAttr(f)}>
+        // Inside the combined Final section, prefix each tie with which match it is
+        // so 3rd-place and Final are distinguishable at a glance.
+        const label = g.rounds.length > 1 ? `<div class="ko-sub">${esc(ROUND_TITLE[f.round] || f.round)}</div>` : "";
+        return `<div class="ko-tie ${f.played ? "done" : ""}"${espnAttr(f)}>
+          ${label}
           ${line(H, "home")}${line(A, "away")}
           ${when ? `<div class="ko-when">${esc(when)}</div>` : ""}
         </div>`;
       }).join("");
-      return `<section class="ko-round"><h3>${ROUND_TITLE[r]}</h3><div class="ties">${ties}</div></section>`;
+      const isOpen = open.has(g.key);
+      return `<section class="ko-round ${isOpen ? "open" : "collapsed"}" data-round="${g.key}">
+        <button type="button" class="ko-toggle" aria-expanded="${isOpen ? "true" : "false"}">
+          <span class="ko-toggle-title">${g.title}</span>
+          <span class="ko-toggle-count">${fx.length}</span>
+          <span class="ko-toggle-caret" aria-hidden="true">▾</span>
+        </button>
+        <div class="ties">${ties}</div>
+      </section>`;
     }).join("");
     return `<div class="ko-list">${sections}
-      ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Your teams are highlighted · italic = projected from latest results</p>` : ""}
+      <p class="brkey">italic = projected from latest results · tap a round to expand or collapse</p>
     </div>`;
+  }
+
+  function wireBracketList() {
+    const list = content.querySelector(".ko-list");
+    if (!list) return;
+    list.addEventListener("click", (e) => {
+      const btn = e.target.closest(".ko-toggle");
+      if (!btn) return;
+      const sect = btn.closest(".ko-round");
+      if (!sect) return;
+      const r = sect.dataset.round;
+      const nowOpen = !sect.classList.contains("open");
+      sect.classList.toggle("open", nowOpen);
+      sect.classList.toggle("collapsed", !nowOpen);
+      btn.setAttribute("aria-expanded", nowOpen ? "true" : "false");
+      const set = loadKORoundOpen();
+      if (nowOpen) set.add(r); else set.delete(r);
+      saveKORoundOpen(set);
+    });
   }
 
   // Desktop: connected bracket drawn top → bottom, with kickoff captions under
@@ -571,7 +637,6 @@
 
     const box = (f, absolute) => {
       const H = P.side(f, "home"), A = P.side(f, "away");
-      const mine = ME && (ownerOf[H.team] === ME || ownerOf[A.team] === ME);
       const sideHtml = (S, which) => {
         const s = bracketSideHtml(f, S, which, "bs", "bdg");
         return `<div class="bxline ${s.isWin ? "win" : ""}">${s.label}<span class="bs">${s.score}${s.badge}</span></div>`;
@@ -586,7 +651,7 @@
         return S.team ? `${S.team} — ${txt}` : txt;
       };
       const data = `data-tround="${esc(ROUND_TITLE[f.round] || f.round)}" data-twhen="${esc(fmtKick(f) || "")}" data-thome="${esc(path(H, "home"))}" data-taway="${esc(path(A, "away"))}"`;
-      return `<div class="bx ${f.played ? "done" : ""} ${mine ? "mine" : ""}" ${pos} ${data}${espnAttr(f)}>${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
+      return `<div class="bx ${f.played ? "done" : ""}" ${pos} ${data}${espnAttr(f)}>${sideHtml(H, "home")}${sideHtml(A, "away")}</div>`;
     };
 
     const boxes = rows.map((r) => D.knockoutFixtures.filter((f) => f.round === r).map((f) => box(f, true)).join("")).join("");
@@ -605,7 +670,7 @@
         ${caps}
       </div>
       ${tp ? `<div class="tp"><h4>${ROUND_TITLE["3P"]}</h4>${box(tp, false)}${fmtKick(tp) ? `<p class="tpwhen">${esc(fmtKick(tp))}</p>` : ""}</div>` : ""}
-      ${ME ? `<p class="brkey"><span class="dot" style="background:${colorFor(ME)}"></span>Your teams are highlighted · italic = projected from latest results</p>` : ""}
+      <p class="brkey">italic = projected from latest results</p>
     </div>`;
   }
 
@@ -725,7 +790,7 @@
     content.innerHTML = views[name]();
     if (name === "groups") wireGroupsNav();
     if (name === "players") wirePlayersSort();
-    if (name === "bracket" && !isSmallScreen()) wireBracketTips();
+    if (name === "bracket") { if (isSmallScreen()) wireBracketList(); else wireBracketTips(); }
     tabs.forEach((t) => {
       const on = t.dataset.view === name;
       t.classList.toggle("active", on);

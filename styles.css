@@ -221,7 +221,6 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .brow { position: absolute; left: 0; width: 52px; display: flex; align-items: center; color: var(--muted); font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em; }
 .bx { position: absolute; box-sizing: border-box; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; overflow: hidden; font-size: 0.78rem; z-index: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .bx.done { border-color: #a3b8cc; }
-.bx.mine { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(26,107,74,0.12); }
 .bxline { display: flex; justify-content: space-between; align-items: center; gap: 6px; padding: 3px 7px; height: 50%; }
 .bxline + .bxline { border-top: 1px solid var(--line); }
 .bxline.win { background: rgba(26,107,74,0.08); font-weight: 700; }
@@ -237,8 +236,7 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .tp h4 { margin: 0 0 0.4rem; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
 .tp .bx { position: static; }
 .tpwhen { color: var(--muted); font-size: 0.7rem; margin: 0.35rem 0 0; max-width: 124px; }
-.brkey { display: flex; align-items: center; gap: 0.4rem; color: var(--muted); font-size: 0.8rem; margin-top: 1rem; flex-wrap: wrap; }
-.brkey .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.brkey { color: var(--muted); font-size: 0.8rem; margin-top: 1rem; }
 
 /* desktop bracket hover tooltip */
 .bxtip {
@@ -261,12 +259,30 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .bxtip-paths { display: flex; flex-direction: column; gap: 0.2rem; color: #d6d6d6; }
 
 /* knockout as a stacked list (mobile) */
-.ko-list { display: flex; flex-direction: column; gap: 1.3rem; }
-.ko-round h3 { margin: 0 0 0.5rem; font-size: 0.82rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
-.ko-round .ties { display: flex; flex-direction: column; gap: 0.5rem; }
+.ko-list { display: flex; flex-direction: column; gap: 0.7rem; }
+.ko-toggle {
+  display: flex; align-items: center; gap: 0.5rem; width: 100%;
+  margin: 0; padding: 0.55rem 0.75rem;
+  background: var(--panel2); color: var(--muted);
+  border: 1px solid var(--line); border-radius: 10px;
+  font-family: inherit; font-size: 0.82rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.04em;
+  cursor: pointer;
+  transition: color .15s ease, border-color .15s ease, background .15s ease;
+}
+.ko-toggle:hover { color: var(--text); border-color: var(--muted); }
+.ko-toggle-title { flex: 1; text-align: left; }
+.ko-toggle-count {
+  color: var(--muted); font-weight: 700; font-size: 0.7rem;
+  background: var(--panel); border: 1px solid var(--line);
+  border-radius: 999px; padding: 0.05rem 0.5rem; letter-spacing: 0;
+}
+.ko-toggle-caret { display: inline-block; font-size: 0.9rem; line-height: 1; transition: transform .15s ease; }
+.ko-round.collapsed .ko-toggle-caret { transform: rotate(-90deg); }
+.ko-round.collapsed .ties { display: none; }
+.ko-round.open .ties { display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.5rem; }
 .ko-tie { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 .ko-tie.done { border-color: #a3b8cc; }
-.ko-tie.mine { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent), 0 4px 16px rgba(26,107,74,0.12); }
 .ko-line { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 0.5rem 0.7rem; font-size: 0.9rem; }
 .ko-line + .ko-line { border-top: 1px solid var(--line); }
 .ko-line.win { background: rgba(26,107,74,0.08); font-weight: 700; }
@@ -276,6 +292,7 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .ko-line .proj { font-style: italic; opacity: 0.85; }
 .ko-line .bdg { color: var(--gold); font-size: 0.6rem; margin-left: 2px; }
 .ko-when { color: var(--muted); font-size: 0.72rem; padding: 0.35rem 0.7rem; border-top: 1px solid var(--line); background: var(--panel2); }
+.ko-sub { color: var(--muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.7rem 0; }
 
 /* player breakdown */
 .psort {
