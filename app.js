@@ -506,23 +506,36 @@
   }
 
   // Mobile: a round-by-round stack of tie cards (no horizontal scroll). Ties in
-  // a round are ordered by kickoff time, and each round header collapses its ties
-  // so the page fits on one screen. Open/closed state per round persists in
-  // localStorage; without stored state the earliest round with an unplayed match
-  // is expanded and the rest start collapsed.
+  // a section are ordered by kickoff time, and each header collapses its ties
+  // so the page fits on one screen. The third-place playoff and the final share
+  // one section because it's the same weekend and only three matches between
+  // them. Open/closed state per section persists in localStorage; without stored
+  // state the earliest section with an unplayed match is expanded and the rest
+  // start collapsed.
   const KO_OPEN_KEY = "wc_ko_open";
-  const KO_ORDER = ["R32", "R16", "QF", "SF", "3P", "F"];
+  const KO_GROUPS = [
+    { key: "R32", title: "Round of 32", rounds: ["R32"] },
+    { key: "R16", title: "Round of 16", rounds: ["R16"] },
+    { key: "QF",  title: "Quarter-finals", rounds: ["QF"] },
+    { key: "SF",  title: "Semi-finals", rounds: ["SF"] },
+    { key: "F",   title: "Final", rounds: ["3P", "F"] },
+  ];
+  const koGroupFixtures = (g) => D.knockoutFixtures
+    .filter((f) => g.rounds.includes(f.round))
+    .slice()
+    .sort((a, b) => whenOf(a) - whenOf(b));
   function loadKORoundOpen() {
+    const validKeys = new Set(KO_GROUPS.map((g) => g.key));
     try {
       const raw = localStorage.getItem(KO_OPEN_KEY);
       if (raw) {
         const arr = JSON.parse(raw);
-        if (Array.isArray(arr)) return new Set(arr.filter((r) => KO_ORDER.includes(r)));
+        if (Array.isArray(arr)) return new Set(arr.filter((k) => validKeys.has(k)));
       }
     } catch (_) {}
-    for (const r of KO_ORDER) {
-      const fx = D.knockoutFixtures.filter((f) => f.round === r);
-      if (fx.length && fx.some((f) => !f.played)) return new Set([r]);
+    for (const g of KO_GROUPS) {
+      const fx = koGroupFixtures(g);
+      if (fx.length && fx.some((f) => !f.played)) return new Set([g.key]);
     }
     return new Set(["F"]);
   }
@@ -532,11 +545,8 @@
 
   function renderBracketList(P) {
     const open = loadKORoundOpen();
-    const sections = KO_ORDER.map((r) => {
-      const fx = D.knockoutFixtures
-        .filter((f) => f.round === r)
-        .slice()
-        .sort((a, b) => whenOf(a) - whenOf(b));
+    const sections = KO_GROUPS.map((g) => {
+      const fx = koGroupFixtures(g);
       if (!fx.length) return "";
       const ties = fx.map((f) => {
         const H = P.side(f, "home"), A = P.side(f, "away");
@@ -545,15 +555,19 @@
           return `<div class="ko-line ${s.isWin ? "win" : ""}">${s.label}<span class="ko-s">${s.score}${s.badge}</span></div>`;
         };
         const when = fmtKick(f);
+        // Inside the combined Final section, prefix each tie with which match it is
+        // so 3rd-place and Final are distinguishable at a glance.
+        const label = g.rounds.length > 1 ? `<div class="ko-sub">${esc(ROUND_TITLE[f.round] || f.round)}</div>` : "";
         return `<div class="ko-tie ${f.played ? "done" : ""}"${espnAttr(f)}>
+          ${label}
           ${line(H, "home")}${line(A, "away")}
           ${when ? `<div class="ko-when">${esc(when)}</div>` : ""}
         </div>`;
       }).join("");
-      const isOpen = open.has(r);
-      return `<section class="ko-round ${isOpen ? "open" : "collapsed"}" data-round="${r}">
+      const isOpen = open.has(g.key);
+      return `<section class="ko-round ${isOpen ? "open" : "collapsed"}" data-round="${g.key}">
         <button type="button" class="ko-toggle" aria-expanded="${isOpen ? "true" : "false"}">
-          <span class="ko-toggle-title">${ROUND_TITLE[r]}</span>
+          <span class="ko-toggle-title">${g.title}</span>
           <span class="ko-toggle-count">${fx.length}</span>
           <span class="ko-toggle-caret" aria-hidden="true">▾</span>
         </button>

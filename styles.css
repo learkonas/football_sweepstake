@@ -292,6 +292,7 @@ table.standings tr.third td { background: rgba(184,134,11,0.06); }
 .ko-line .proj { font-style: italic; opacity: 0.85; }
 .ko-line .bdg { color: var(--gold); font-size: 0.6rem; margin-left: 2px; }
 .ko-when { color: var(--muted); font-size: 0.72rem; padding: 0.35rem 0.7rem; border-top: 1px solid var(--line); background: var(--panel2); }
+.ko-sub { color: var(--muted); font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; padding: 0.35rem 0.7rem 0; }
 
 /* player breakdown */
 .psort {
