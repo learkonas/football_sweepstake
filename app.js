@@ -93,9 +93,18 @@
           kind: winner === f.home ? ["penWin", "penLoss"] : winner === f.away ? ["penLoss", "penWin"] : ["draw", "draw"],
         };
       }
-      // decided in regulation or extra time: win = 3, loss = 0
       const winner = hs > as ? f.home : as > hs ? f.away : (f.winner || null);
       const loser = winner ? (winner === f.home ? f.away : f.home) : null;
+      if (f.decided === "et") {
+        // level after 90, decided in extra time: winner 3pts, loser 1pt (drew after 90)
+        return {
+          winner, loser, draw: false,
+          homePts: winner === f.home ? PTS.win : winner ? PTS.draw : 0,
+          awayPts: winner === f.away ? PTS.win : winner ? PTS.draw : 0,
+          kind: winner === f.home ? ["win", "draw"] : winner === f.away ? ["draw", "win"] : ["draw", "draw"],
+        };
+      }
+      // decided in regulation: win = 3, loss = 0
       return {
         winner, loser, draw: false,
         homePts: winner === f.home ? PTS.win : winner ? PTS.loss : 0,
